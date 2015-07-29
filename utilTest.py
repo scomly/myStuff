@@ -3,8 +3,10 @@ from PySide import QtCore
 import maya.OpenMayaUI as mui
 import shiboken
 import maya.cmds as cmds
-from mVray import vrayObjectProperties as vop
+#from mVray import vrayObjectProperties as vop
 from mVray import vrayFrameBuffers as vfb
+import yaml
+
 
 def getMayaWindow():
     pointer = mui.MQtUtil.mainWindow()
@@ -25,8 +27,9 @@ class UtilityToolBoxUI(QtGui.QDialog):
     def createLayout(self):
         
         layout = QtGui.QVBoxLayout() # main layout
-        self.setMinimumHeight(500)
+        self.setMinimumHeight(650)
         self.setMinimumWidth(750)
+        layout.setSpacing(0)
         
         ########### catch all checkboxes here ################
         self.cbButtonList = {}
@@ -142,7 +145,14 @@ class UtilityToolBoxUI(QtGui.QDialog):
         
         self.import_button.clicked.connect(self.importButtonFunction)
                 
-        #################################################################################################
+        ####################### Output Window ####################################################
+        
+        self.outWindow = QtGui.QTextEdit()
+        layout.addWidget(self.outWindow)
+        self.outWindow.setMaximumHeight(250)
+        
+        ############################################################################################
+        
         
         self.setLayout(layout) # add main layout itself to this dialog
         
@@ -152,73 +162,112 @@ class UtilityToolBoxUI(QtGui.QDialog):
         cmds.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
         if cmds.pluginInfo('vrayformaya', q=True, loaded=True) == False:
             cmds.loadPlugin('vrayformaya', qt=True)
+            
+        output = []
+        warningSphere = []
+        warningPlate = []
+        
+        shotCam = 'shotcam1:shot_camera'   
                  
         for x,y in self.cbButtonList.iteritems():
             
             if x == "Red" and y.isChecked() == True:
                 CreateRGBLightMaterials('RED',1,0,0)
+                output.append("Created Red VRay Light Material")
                 
             if x == "Green" and y.isChecked() == True:
                 CreateRGBLightMaterials('GREEN',0,1,0)
+                output.append("Created Green VRay Light Material")
                               
             if x == "Blue" and y.isChecked() == True:
                 CreateRGBLightMaterials('BLUE',0,0,1)
+                output.append("Created Blue VRay Light Material")
                 
             if x == "White" and y.isChecked() == True:
                 CreateRGBLightMaterials('WHITE',1,1,1)
+                output.append("Created White VRay Light Material")
                                 
             if x == "Black" and y.isChecked() == True:
                 CreateRGBLightMaterials('BLACK',0,0,0)
+                output.append("Created Black VRay Light Material")
                 
             if x == "Shadow" and y.isChecked() == True:
                 CreateRenderElements('shadow')
+                output.append("Created Matte Shadow Render Element")
                 
             if x == "Contact_Shadow" and y.isChecked() == True:
                 CreateCatchers('contact_shadow')
                 CreateRenderElements('contactShadow')
+                output.append("Created Contact Shadow Render Element")
+                output.append("Created Conatct Shadow VRay Dirt Texture")
                                 
             if x == "Reflection_Occ" and y.isChecked() == True:
                 CreateCatchers('reflection')
-                CreateRenderElements('refl_occ')                  
+                CreateRenderElements('refl_occ')
+                output.append("Created Reflection Occlusion VRay Dirt Texture")
+                output.append("Created Refleection Occlusion Render Element")               
                                                       
             if x == "Fresnel" and y.isChecked() == True:
                 CreateRenderElements('fresnel')
+                output.append("Created VRay Frensel Utility")
+                output.append("Created Fresnel Render Element")
                         
             if x == "Shadow_Catcher" and y.isChecked() == True:
                 CreateCatchers('shadow')
+                output.append("Created Shadow Catcher Vray Mtl")
                 
             if x == "Plate_Projection" and y.isChecked() == True:
-                PlateProject()  
-                                    
+                PlateProject()
+                output.append("Created Plate Projection Shader")
+                if not cmds.objExists(shotCam): 
+                   warningPlate.append("Could not link plate projection node to shotcam. Shotcam does not exist.")
+          
             if x == "Reflection_Catcher" and y.isChecked() == True:
                 CreateCatchers('reflection')
+                output.append("Created Reflection Catcher Vray Mtl")
                  
             if x == "Ref_Spheres" and y.isChecked() == True:
-                CreateRefSphere()                
+                CreateRefSphere()
+                output.append("Created Reference Spheres and Color Chart")
+                if not cmds.objExists(shotCam): 
+                   warningSphere.append("Could not position and constrain to shotcam. Shotcam does not exist.")
+        
+                
+        conformOutput = '\n'.join(output) ## reformats output list
+        conformSphereWarn = '\n'.join(warningSphere) ## reformats output list
+        conformPlateWarn = '\n'.join(warningPlate) ## reformats output list
+                
+        #conformWarn = "<font color=red>" + '\n'.join(warningStuff) + "</font>" ## reformats warning list
+        warningSphereOut = "<font color=red>" + conformSphereWarn + "</font>" ## turn that string red
+        warningPlateOut = "<font color=red>" + conformPlateWarn + "</font>" ## turn that string red
+        
+        self.outWindow.setText(conformOutput) ## prints output in output box
+        self.outWindow.append(warningSphereOut) ## prints warnings in output box 
+        self.outWindow.append(warningPlateOut) ## prints warnings in output box         
     
-    def checkAllFunction(self):
+    def checkAllFunction(self): ## Check all Button
         for x,y in self.cbButtonList.iteritems():
             y.setChecked(True)
         
-    def checkNoneFunction(self):
+    def checkNoneFunction(self): ## Check None Button
         for x,y in self.cbButtonList.iteritems():
             y.setChecked(False)
 
-    def topToggle(self, event):
+    def topToggle(self, event): ## Top list CB toggle
         flipRow(self.topListCheckBox)        
 
-    def midTopToggle(self, event):
+    def midTopToggle(self, event): ## midTop list CB toggle
         flipRow(self.midTopListCheckBox) 
         
-    def midBotToggle(self, event):
+    def midBotToggle(self, event): ## midBot list CB toggle
         flipRow(self.midBotListCheckBox)  
 
-    def bottomToggle(self, event):
+    def bottomToggle(self, event): ## Bottom list CB toggle
         flipRow(self.bottomListCheckBox)             
         
 
 
-def flipRow(whichList):
+def flipRow(whichList): ## toggle row of checkboxes if you click on the label
     if whichList.values()[0].isChecked() == True:
         for x,y in whichList.iteritems():
             y.setChecked(False)
@@ -526,3 +575,22 @@ class CreateRefSphere(object):
 
 ## example creation ##   
 ## createRefSpheres = CreateRefSphere()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
