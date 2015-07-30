@@ -1,12 +1,11 @@
+from mVray import vrayFrameBuffers as vfb
 from PySide import QtGui
 from PySide import QtCore
+import maya.cmds as cmds
 import maya.OpenMayaUI as mui
 import shiboken
-import maya.cmds as cmds
-#from mVray import vrayObjectProperties as vop
-from mVray import vrayFrameBuffers as vfb
-#import sys
 import yaml
+import os
 
 ########################################################################
 ############################### GUI ####################################
@@ -32,9 +31,19 @@ class UtilityToolBoxUI(QtGui.QDialog):
         self.middleBotList = ["Shadow_Catcher", "Plate_Projection", "Reflection_Catcher"]
         self.bottomList = ["Ref_Spheres"]
 
-        ############################################################################
+        ############ Get Show/Seq/Shot ###################################################
+        
+        showPath = os.environ['M_JOB_PATH']
+        seqPath = os.environ['M_SEQUENCE_PATH']
+        shotPath = os.environ['M_SHOT_PATH']
+        
+        #############################################################################
 
-        self.createLayout() # runs def createLayout
+        self.createLayout() # runs function below
+    
+    ################################################################################    
+    ##################### Layout Creation ##########################################    
+    ################################################################################
         
     def createLayout(self):
         
@@ -92,12 +101,12 @@ class UtilityToolBoxUI(QtGui.QDialog):
         saveButton = QtGui.QPushButton("Save")
         saveButton.setMaximumWidth(50)
         radioLayout.addWidget(saveButton)
-        saveButton.clicked.connect(self.savePreset)
+        saveButton.clicked.connect(self.savePreset) ## clicked
                 
         loadButton = QtGui.QPushButton("Load")
         loadButton.setMaximumWidth(50)
         radioLayout.addWidget(loadButton)
-        loadButton.clicked.connect(self.loadPreset)
+        loadButton.clicked.connect(self.loadPreset) ## clicked
         
         spacer3 = QtGui.QSpacerItem(125,0)
         radioLayout.addSpacerItem(spacer3)
@@ -189,19 +198,18 @@ class UtilityToolBoxUI(QtGui.QDialog):
         
         self.checkAll_button = QtGui.QPushButton("Check All")
         allCheckLayout.layout().addWidget(self.checkAll_button)
-        self.checkAll_button.clicked.connect(self.checkAllFunction)
+        self.checkAll_button.clicked.connect(self.checkAllFunction) ## clicked
         
         self.checkNone_button = QtGui.QPushButton("Check None")
         allCheckLayout.layout().addWidget(self.checkNone_button)
-        self.checkNone_button.clicked.connect(self.checkNoneFunction)
+        self.checkNone_button.clicked.connect(self.checkNoneFunction) ## clicked
         
         ####################### Import button #####################################################
         
         self.import_button = QtGui.QPushButton("Import")
         layout.addWidget(self.import_button)
-        self.import_button.setMinimumHeight(50)
-        
-        self.import_button.clicked.connect(self.importButtonFunction)
+        self.import_button.setMinimumHeight(50)        
+        self.import_button.clicked.connect(self.importButtonFunction) ## clicked
                 
         ####################### Output Window ####################################################
         
@@ -213,11 +221,15 @@ class UtilityToolBoxUI(QtGui.QDialog):
         ############################################################################################
                 
         self.setLayout(layout) # add main layout itself to this dialog
+    
+    #########################################################################
+    ################### Functions ###########################################
+    #########################################################################    
         
     ################### Save/Load Preset Functions ##########################    
-    ################### Change file path here ###############################
+    ################### Change yaml file path here ##########################
         
-    def savePreset(self):
+    def savePreset(self): ## Save Button Function
         for x,y in self.cbButtonList.iteritems():
             if y.isChecked() == True:
                 cbState = True
@@ -235,7 +247,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
             with open('/home/scomly/python/test_yaml/shot/test.yml', 'w') as outfile:
                 outfile.write(yaml.dump(self.getState, default_flow_style=False))                       
         
-    def loadPreset(self):
+    def loadPreset(self): ## Load Button Function
         try:
             if self.showRadio.isChecked() == True:
                 infile = open('/home/scomly/python/test_yaml/show/test2.yml')
@@ -257,7 +269,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 else:
                     exec('self.%s.buttonVarName.setCheckState(QtCore.Qt.Unchecked)' % (x))
           
-    def importButtonFunction(self):
+    def importButtonFunction(self): ## Import Button Function
         
         cmds.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
         if cmds.pluginInfo('vrayformaya', q=True, loaded=True) == False:
@@ -332,7 +344,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 if not cmds.objExists(shotCam): 
                    warningSphere.append("Could not position and constrain to shotcam. Shotcam does not exist.")
                    
-        ############# Output Statements ######################           
+        ############# Output Statements #################################           
         
         conformOutput = '\n'.join(output) ## reformats output list
         conformSphereWarn = '\n'.join(warningSphere) ## reformats output list
@@ -347,15 +359,15 @@ class UtilityToolBoxUI(QtGui.QDialog):
         
     ############# Un/Check All Functions ######################
     
-    def checkAllFunction(self): ## Check all Button
+    def checkAllFunction(self): ## Check All Button Function
         for x,y in self.cbButtonList.iteritems():
             y.setChecked(True)
         
-    def checkNoneFunction(self): ## Check None Button
+    def checkNoneFunction(self): ## Check None Button Function
         for x,y in self.cbButtonList.iteritems():
             y.setChecked(False)
                 
-    ############## Toggle each line Functions ###################################
+################ Toggle each line Functions ###################################
         
     def topToggle(self, event): ## Top list CB toggle
         flipRow(self.topListCheckBox)        
@@ -417,11 +429,9 @@ if __name__ == "__main__":
     ui = UtilityToolBoxUI()
     ui.show()        
 
-
 ########################################################################
-############################### Back End ###############################
+############################### BACK END ###############################
 ########################################################################
-
 
 class CreateRGBLightMaterials(object):        
     def __init__(self, shaderName, R, G, B):
@@ -578,8 +588,7 @@ class PlateProject(object):
   
 class CreateRefSphere(object):    
     def __init__(self):
-        
-        
+               
         if not cmds.objExists('greyBallShader'):
             diffShader = cmds.shadingNode('VRayMtl', asShader=True, name='greyBallShader')
             diffShaderSG = cmds.sets(name = 'greyBallSG', renderable=True,noSurfaceShader=True,empty=True)
@@ -615,12 +624,10 @@ class CreateRefSphere(object):
             
             cmds.sets(refBall[0], e=True, forceElement='chromeBallSG')
             ## assigns chrome ball shader to geo        
-
     
         colorChartTexturePath = '/jobs/asset_library/sequences/assets/common/pub/hdr_library/ColorChecker_linear_from_Avg_16bit.exr'
         ## color chart texture path
-        
-        
+               
         if not cmds.objExists('colorChartShader'):
             chartShader = cmds.shadingNode('VRayLightMtl', asShader=True, name='colorChartShader')
             chartShaderSG = cmds.sets(name = 'chartShaderSG', renderable=True,noSurfaceShader=True,empty=True)
@@ -637,8 +644,7 @@ class CreateRefSphere(object):
             
             cmds.sets(colorChart[0], e=True, forceElement='chartShaderSG')
             ## assigns shader
-        
-        
+                
         if not cmds.objExists('chartTexture'):
             chartTexture = cmds.shadingNode('file', asTexture=True, name='chartTexture')
             chartTwoD = cmds.shadingNode('place2dTexture', asUtility=True, name='chartPlace2d')    
