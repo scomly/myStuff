@@ -1,17 +1,17 @@
 
 import hou
 
-shader = hou.selectedNodes()[0]
-path = shader.path()
-print shader
+sourceShader = hou.selectedNodes()[0]
+#path = shader.path()
+#print shader
 
-getShader = hou.node(path)
+#getShader = hou.node(path)
 
-shader.parent()
+#shader.parent()
 
-ting = hou.node(path)
+#ting = hou.node(path)
 
-parms = shader.parms()
+sourceParms = sourceShader.parms()
 
 changedParms = {}
 
@@ -22,13 +22,17 @@ for x in parms:
         parmEval = x.eval()
         changedParms[parmname] = parmEval
         
-hou.copyNodesTo('/shop/mantrasurface', hou.node( '/shop/shaderOne/'))
+destinShader =  hou.selectedNodes()[0]
+
+for x,y in changedParms.iteritems():
+   # print x
+   # print y
+    destinShader.parm(x).set(y)
+        
 
 
-mat = hou.node('shop/mantrasurface')
-print mat
-list(mat)
+#mat = hou.node('shop/mantrasurface')
 
+#dest = hou.node('/shop/')
 
-dest = hou.node('/shop/')
-hou.copyNodesTo(mat, dest)
+#hou.copyNodesTo([mat], dest)
