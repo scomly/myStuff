@@ -1,8 +1,9 @@
-sourceRop = hou.selectedNodes()[0]
+sourceRop = hou.selectedNodes()
 
-
-sourceRop.parm('vm_samplesx').set(9)
-sourceRop.parm('vm_samplesy').set(9)
-sourceRop.parm('vm_variance').set(0.03)
-sourceRop.parm('allowmotionblur').set(1)
-sourceRop.parm('override_camerares').set(0)
+for x in sourceRop:
+    x.parm('vm_samplesx').set(9)
+    x.parm('vm_samplesy').set(9)
+    x.parm('vm_maxraysamples').set(9)
+    x.parm('vm_variance').set(0.03)
+    x.parm('allowmotionblur').set(1)
+    x.parm('override_camerares').set(0)
