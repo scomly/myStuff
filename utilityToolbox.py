@@ -7,6 +7,7 @@ import shiboken
 import yaml
 import os
 
+
 ########################################################################
 ############################### GUI ####################################
 ########################################################################
@@ -30,13 +31,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
         self.middleTopList = ["Shadow", "Contact_Shadow", "Fresnel", "Reflection_Occ"]
         self.middleBotList = ["Shadow_Catcher", "Plate_Projection", "Reflection_Catcher"]
         self.bottomList = ["Ref_Spheres"]
-
-        ############ Get Show/Seq/Shot ###################################################
-        
-        showPath = os.environ['M_JOB_PATH']
-        seqPath = os.environ['M_SEQUENCE_PATH']
-        shotPath = os.environ['M_SHOT_PATH']
-        
+      
         #############################################################################
 
         self.createLayout() # runs function below
@@ -216,7 +211,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
         self.outWindow = QtGui.QTextEdit()
         self.outWindow.setReadOnly(True)
         layout.addWidget(self.outWindow)
-        self.outWindow.setMaximumHeight(250)
+        self.outWindow.setMaximumHeight(275)
         
         ############################################################################################
                 
@@ -230,6 +225,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
     ################### Change yaml file path here ##########################
         
     def savePreset(self): ## Save Button Function
+        getShowInfo()
+        
         for x,y in self.cbButtonList.iteritems():
             if y.isChecked() == True:
                 cbState = True
@@ -237,24 +234,47 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 cbState = False
             self.getState[x] = cbState
             
-        if self.showRadio.isChecked() == True:
-            with open('/home/scomly/python/test_yaml/show/test.yml', 'w') as outfile:
-                outfile.write(yaml.dump(self.getState, default_flow_style=False))
-        elif self.seqRadio.isChecked() == True:
-            with open('/home/scomly/python/test_yaml/seq/test.yml', 'w') as outfile:
-                outfile.write(yaml.dump(self.getState, default_flow_style=False))
-        elif self.shotRadio.isChecked() == True:
-            with open('/home/scomly/python/test_yaml/shot/test.yml', 'w') as outfile:
-                outfile.write(yaml.dump(self.getState, default_flow_style=False))                       
+        if self.showRadio.isChecked() == True:           
+            if not os.path.exists(getShowInfo.jobPath):
+                os.makedirs(getShowInformation.jobPath)           
+            with open('%s/utilToolbox.yml' % getShowInfo.jobPath, 'w') as outfile:
+                outfile.write(yaml.dump(self.getState, default_flow_style=False))                
+            showConfig = "<font color=yellow>Saved SHOW preset.</font>"
+            self.outWindow.setText(showConfig)
+            
+        elif self.seqRadio.isChecked() == True:           
+            if not os.path.exists(getShowInfo.seqPath):
+                os.makedirs(getShowInfo.seqPath)                
+            with open('%s/utilToolbox.yml' % getShowInfo.seqPath, 'w') as outfile:
+                outfile.write(yaml.dump(self.getState, default_flow_style=False))                
+            seqConfig = "<font color=yellow>Saved SEQ preset.</font>"
+            self.outWindow.setText(seqConfig)
+                
+        elif self.shotRadio.isChecked() == True:            
+            if not os.path.exists(getShowInfo.shotPath):
+                os.makedirs(getShowInfo.shotPath)                 
+            with open('%s/utilToolbox.yml' % getShowInfo.shotPath, 'w') as outfile:
+                outfile.write(yaml.dump(self.getState, default_flow_style=False))                
+            shotConfig = "<font color=yellow>Saved SHOT preset.</font>"
+            self.outWindow.setText(shotConfig)                      
         
     def loadPreset(self): ## Load Button Function
+    
+        getShowInfo()
+    
         try:
             if self.showRadio.isChecked() == True:
-                infile = open('/home/scomly/python/test_yaml/show/test2.yml')
+                infile = open('%s/utilToolbox.yml' % getShowInfo.jobPath)
+                showConfig = "<font color=yellow>Loaded SHOW preset.</font>"
+                self.outWindow.setText(showConfig)         
             elif self.seqRadio.isChecked() == True:
-                infile = open('/home/scomly/python/test_yaml/seq/test2.yml')
+                infile = open('%s/utilToolbox.yml' % getShowInfo.seqPath)
+                seqConfig = "<font color=yellow>Loaded SEQ preset.</font>"
+                self.outWindow.setText(seqConfig)   
             elif self.shotRadio.isChecked() == True:
-                infile = open('/home/scomly/python/test_yaml/shot/test2.yml')
+                infile = open('%s/utilToolbox.yml' % getShowInfo.shotPath)
+                shotConfig = "<font color=yellow>Loaded SHOT preset.</font>"
+                self.outWindow.setText(shotConfig)   
         except:
             noConfig = "<font color=red>NO CONFIG FILE EXISTS</font>"
             self.outWindow.setText(noConfig)
@@ -270,7 +290,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
                     exec('self.%s.buttonVarName.setCheckState(QtCore.Qt.Unchecked)' % (x))
           
     def importButtonFunction(self): ## Import Button Function
-        
+    
+        #### sets to default layer and enables Vray is not already enabled#######
         cmds.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
         if cmds.pluginInfo('vrayformaya', q=True, loaded=True) == False:
             cmds.loadPlugin('vrayformaya', qt=True)
@@ -332,7 +353,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 PlateProject()
                 output.append("Created Plate Projection Shader")
                 if not cmds.objExists(shotCam): 
-                   warningPlate.append("Could not link plate projection node to shotcam. Shotcam does not exist.")
+                   warningPlate.append("Could not link plate projection node to shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
           
             if x == "Reflection_Catcher" and y.isChecked() == True:
                 CreateCatchers('reflection')
@@ -342,7 +363,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 CreateRefSphere()
                 output.append("Created Reference Spheres and Color Chart")
                 if not cmds.objExists(shotCam): 
-                   warningSphere.append("Could not position and constrain to shotcam. Shotcam does not exist.")
+                   warningSphere.append("Could not position and constrain ref spheres shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
                    
         ############# Output Statements #################################           
         
@@ -366,6 +387,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
     def checkNoneFunction(self): ## Check None Button Function
         for x,y in self.cbButtonList.iteritems():
             y.setChecked(False)
+            
+
                 
 ################ Toggle each line Functions ###################################
         
@@ -389,6 +412,20 @@ def flipRow(whichList): ## toggle row of checkboxes if you click on the label
         for x,y in whichList.iteritems():
             y.setChecked(True)
             
+############ Get Show/Seq/Shot ###################################################        
+
+def getShowInfo():
+
+    tackOn = '/TECH/config'
+    tackOnJob = '/TECH/lib/maya/config'
+    
+    getShowInfo.shotPath = os.environ.get('M_SHOT_PATH') + tackOn
+    getShowInfo.seqPath = os.environ.get('M_SEQUENCE_PATH') + tackOn
+
+    getShowInfo.jobPath = os.environ.get('M_JOB_PATH') + tackOnJob 
+    
+
+        
 ################## Create Checkbox Class ########################################
                      
 class UtilCreateCheckBox(object):
@@ -416,18 +453,7 @@ class FrameLabel(object):
         font.setPointSize(15)
         self.frameLabelVarName.setFont(font)
         
-################## Show Window #######################################            
- 
-if __name__ == "__main__":
-    
-    # will try and close the ui if it exists
-    try:
-        ui.close()
-    except:
-        pass
-        
-    ui = UtilityToolBoxUI()
-    ui.show()        
+
 
 ########################################################################
 ############################### BACK END ###############################
@@ -578,8 +604,11 @@ class PlateProject(object):
             cmds.connectAttr('%s.outUV' % (twoD), '%s.uv' % (plateTexture))
             cmds.connectAttr('%s.outUvFilterSize' % (twoD), '%s.uvFilterSize' % (plateTexture))
             ## connects place2D for plate texture
-                
-            if cmds.objExists(projectCam):
+
+        if cmds.objExists(projectCam):
+            fileProject = cmds.ls('projectNodePlate')[0]
+            getIfConnect = cmds.listConnections('%s.linkedCamera' % (fileProject), d=False, s=True)
+            if getIfConnect == None:
                 cmds.connectAttr('%s' % (projectCam) + 'Shape.message', '%s.linkedCamera' % (fileProject), f=True)
             ## connects shotcam to the proj cam if it exists
 
@@ -667,13 +696,37 @@ class CreateRefSphere(object):
             refSetupTransGroup = 'TranslateThis'
             refSetupGroupMembers = (colorChart[0], refBall[0], diffBall[0])
             translateGroup = cmds.group(refSetupGroupMembers, name=refSetupTransGroup)
-
             refSetupGroup = cmds.group(translateGroup, name=refSetupGroupName)
-            shotCam = 'shotcam1:shot_camera'
-            if cmds.objExists(shotCam):
+
+        shotCam = 'shotcam1:shot_camera'
+                
+        if cmds.objExists(shotCam):
+            refSetupGroup = cmds.ls('RefSphere_GRP')[0]
+            translateGroup = cmds.ls('TranslateThis')[0]  
+            getIfConnect = cmds.listConnections('%s.tx' % (refSetupGroup), d=False, s=True)
+            if getIfConnect == None:
                 cmds.parentConstraint(shotCam, refSetupGroup, mo=False)
                 cmds.setAttr('%s.translate' % (translateGroup), -50, -25, -150)
             ## creates groups and constrains to camera
 
 ## example creation ##   
 ## createRefSpheres = CreateRefSphere()   
+
+def launchUI():
+    global vrayToolBoxUtil
+    
+    # will try and close the ui if it exists
+    try: vrayToolBoxUtil.close()
+    except: pass
+    
+    vrayToolBoxUtil = UtilityToolBoxUI()
+    vrayToolBoxUtil.show()    
+        
+################## Show Window #######################################            
+ 
+if __name__ == "__main__": 
+    launchUI()
+
+
+    
+    
