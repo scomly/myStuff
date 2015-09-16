@@ -21,6 +21,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
     def __init__(self, parent=getMayaWindow()):
         super(UtilityToolBoxUI, self).__init__(parent)
         
+        getShowInfo()
+        
         self.setWindowTitle("Utility Toolbox")
         self.setWindowFlags(QtCore.Qt.Tool) # makes it a tool window so it will stay on top of maya
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose) # deletes UI when closed
@@ -31,7 +33,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
         self.middleTopList = ["Shadow", "Contact_Shadow", "Fresnel", "Reflection_Occ"]
         self.middleBotList = ["Shadow_Catcher", "Plate_Projection", "Reflection_Catcher"]
         self.bottomList = ["Ref_Spheres"]
-        self.userList = ["test"]
+        self.userList = []
       
         #############################################################################
 
@@ -52,13 +54,15 @@ class UtilityToolBoxUI(QtGui.QDialog):
         
         self.cbButtonList = {}
         self.getState = {}
+        self.userListCheckBox = {}
+        self.exportShadDict = {}
         
         ############ Save/Load Preset ##########################
         
         radioLayout = QtGui.QHBoxLayout()
         layout.addLayout(radioLayout)
         
-        spacer = QtGui.QSpacerItem(125,0)
+        spacer = QtGui.QSpacerItem(175,0)
         radioLayout.addSpacerItem(spacer)
         
         radioLabel = QtGui.QLabel("Save Preset")
@@ -69,28 +73,33 @@ class UtilityToolBoxUI(QtGui.QDialog):
         radioLabel.setFont(font)
         radioLabel.setMaximumWidth(100)
               
-        radioGroup = QtGui.QButtonGroup()
+        radioGroup = QtGui.QButtonGroup(self)
        
         self.showRadio = QtGui.QRadioButton("Show")
         self.showRadio.setMaximumWidth(50)
         self.showRadio.setMinimumWidth(50)
         self.showRadio.setChecked(True)
+        self.showRadio.toggled.connect(self.loadPreset) ## clicked
+        
         radioGroup.addButton(self.showRadio)
         
         self.seqRadio = QtGui.QRadioButton("Seq")
         self.seqRadio.setMaximumWidth(50)
         self.seqRadio.setMinimumWidth(50)
+        self.seqRadio.toggled.connect(self.loadPreset) ## clicked
         radioGroup.addButton(self.seqRadio)
         
         self.shotRadio = QtGui.QRadioButton("Shot")
         self.shotRadio.setMaximumWidth(50)
-        self.shotRadio.setMinimumWidth(50)        
+        self.shotRadio.setMinimumWidth(50)
+        self.shotRadio.toggled.connect(self.loadPreset) ## clicked
         radioGroup.addButton(self.shotRadio)
         
         self.personalRadio = QtGui.QRadioButton("Personal")
         self.personalRadio.setMaximumWidth(50)
-        self.personalRadio.setMinimumWidth(75)        
-        radioGroup.addButton(self.shotRadio)
+        self.personalRadio.setMinimumWidth(75)
+        self.personalRadio.toggled.connect(self.loadPreset) ## clicked        
+        radioGroup.addButton(self.personalRadio)
         
         radioLayout.addWidget(self.showRadio)
         radioLayout.addWidget(self.seqRadio)
@@ -101,23 +110,13 @@ class UtilityToolBoxUI(QtGui.QDialog):
         radioLayout.addSpacerItem(spacer2)
         
         saveButton = QtGui.QPushButton("Save")
-        saveButton.setMaximumWidth(50)
+        saveButton.setMaximumWidth(200)
         radioLayout.addWidget(saveButton)
         saveButton.clicked.connect(self.savePreset) ## clicked
-                
-        loadButton = QtGui.QPushButton("Load")
-        loadButton.setMaximumWidth(50)
-        radioLayout.addWidget(loadButton)
-        loadButton.clicked.connect(self.loadPreset) ## clicked
         
-        spacer3 = QtGui.QSpacerItem(125,0)
+        spacer3 = QtGui.QSpacerItem(150,0)
         radioLayout.addSpacerItem(spacer3)
-        
-        
-
-        
-        
-        
+                
         #################### Top Frame ##############################################
         
         self.top_frame = QtGui.QFrame()
@@ -197,12 +196,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
             setattr(self, x, cb)
             
         self.cbButtonList.update(self.bottomListCheckBox)
-        
-        
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
+
+        ########### User Export Buttons #################################################
         
         exportLayout = QtGui.QHBoxLayout()
         
@@ -218,78 +213,84 @@ class UtilityToolBoxUI(QtGui.QDialog):
         font2.setPointSize(12)
         exportLabel.setFont(font2)
         exportLabel.setMaximumWidth(150)
-        
+        spacer18 = QtGui.QSpacerItem(10,0)
+        exportLayout.addSpacerItem(spacer18)
         
         self.exportWindow = QtGui.QTextEdit()
         self.exportWindow.setMaximumWidth(200)
         self.exportWindow.setMaximumHeight(20)
         exportLayout.addWidget(self.exportWindow)
         
+        spacer17 = QtGui.QSpacerItem(10,0)
+        exportLayout.addSpacerItem(spacer17)
+        
         exportButton = QtGui.QPushButton("Export")
         exportButton.setMaximumWidth(100)
         exportLayout.addWidget(exportButton)
         exportButton.clicked.connect(self.exportNetwork) ## clicked
         
+        deleteButton = QtGui.QPushButton("Delete")
+        deleteButton.setMaximumWidth(100)
+        exportLayout.addWidget(deleteButton)
+        deleteButton.clicked.connect(self.deleteUser) ## clicked
+        
         spacer5 = QtGui.QSpacerItem(125,0)
         exportLayout.addSpacerItem(spacer5)        
                 
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
         ############################################################################
         
         radioLayout2 = QtGui.QHBoxLayout()
         layout.addLayout(radioLayout2)
         
-        spacer6 = QtGui.QSpacerItem(200,0)
+        spacer6 = QtGui.QSpacerItem(150,0)
         radioLayout2.addSpacerItem(spacer6)
         
         radioLabel2 = QtGui.QLabel("Export to")
         radioLayout2.addWidget(radioLabel2)
-        font = QtGui.QFont()
-        font.setBold(True)
-        font.setPointSize(12)
-        radioLabel2.setFont(font)
+        font2 = QtGui.QFont()
+        font2.setBold(True)
+        font2.setPointSize(12)
+        radioLabel2.setFont(font2)
         radioLabel2.setMaximumWidth(100)
               
-        radioGroup2 = QtGui.QButtonGroup()
+        radioGroup2 = QtGui.QButtonGroup(self)
        
         self.showRadio2 = QtGui.QRadioButton("Show")
         self.showRadio2.setMaximumWidth(50)
         self.showRadio2.setMinimumWidth(50)
-        self.showRadio2.setChecked(True)
+        self.showRadio2.toggled.connect(self.createUserCheckboxes) ## clicked          
         radioGroup2.addButton(self.showRadio2)
+
         
         self.seqRadio2 = QtGui.QRadioButton("Seq")
         self.seqRadio2.setMaximumWidth(50)
         self.seqRadio2.setMinimumWidth(50)
+        self.seqRadio2.toggled.connect(self.createUserCheckboxes) ## clicked  
         radioGroup2.addButton(self.seqRadio2)
         
         self.shotRadio2 = QtGui.QRadioButton("Shot")
         self.shotRadio2.setMaximumWidth(50)
-        self.shotRadio2.setMinimumWidth(50)        
+        self.shotRadio2.setMinimumWidth(50)
+        self.shotRadio2.toggled.connect(self.createUserCheckboxes) ## clicked          
         radioGroup2.addButton(self.shotRadio2)
         
         self.personalRadio2 = QtGui.QRadioButton("Personal")
         self.personalRadio2.setMaximumWidth(50)
-        self.personalRadio2.setMinimumWidth(75)        
-        radioGroup2.addButton(self.shotRadio2)
+        self.personalRadio2.setMinimumWidth(75)
+        self.personalRadio2.toggled.connect(self.createUserCheckboxes) ## clicked        
+        radioGroup2.addButton(self.personalRadio2)
         
         radioLayout2.addWidget(self.showRadio2)
         radioLayout2.addWidget(self.seqRadio2)
         radioLayout2.addWidget(self.shotRadio2)
         radioLayout2.addWidget(self.personalRadio2)
         
-        spacer7 = QtGui.QSpacerItem(200,0)
+        self.showRadio2.setChecked(True)
+        
+        spacer7 = QtGui.QSpacerItem(250,0)
         radioLayout2.addSpacerItem(spacer7) 
-        
-        
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
+
+        ########## User Frame #########################################################
         
         self.user_frame = QtGui.QFrame()
         self.user_frame.setFrameStyle(QtGui.QFrame.Panel | QtGui.QFrame.Raised)
@@ -299,29 +300,21 @@ class UtilityToolBoxUI(QtGui.QDialog):
         
         ul = FrameLabel("User_label", "User", self.user_frame)
         
-        ul.frameLabelVarName.mouseReleaseEvent = self.bottomToggle
-                
-        self.userListCheckBox = {}
+        ul.frameLabelVarName.mouseReleaseEvent = self.userToggle
         
-               
-        for x in self.userList:
-            cb = UtilCreateCheckBox(x, x, self.user_frame)
-            self.userListCheckBox[x] = cb.buttonVarName
-            setattr(self, x, cb)
+        try:        
+            self.userInfile = open('%s/userExport.yml' % getShowInfo.jobPath)#
+            self.userInSettings = yaml.load(self.userInfile)
+            self.userInfile.close()
+      
+            for x in self.userInSettings.keys():
+                cb = UtilCreateCheckBox(x, x, self.user_frame)
+                self.userListCheckBox[x] = cb.buttonVarName
+                #setattr(self, x, cb)  
+            self.cbButtonList.update(self.userListCheckBox)
             
-        self.cbButtonList.update(self.userListCheckBox)
-        
-        #print self.cbButtonList
-        #print self.userListCheckBox       
-        
-        
-        
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################  
-                    
+        except: pass
+                   
         ######################### Un/Check All buttons ##################################################
         
         allCheckLayout = QtGui.QHBoxLayout()
@@ -350,6 +343,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
         self.outWindow.setMaximumHeight(275)
         
         ############################################################################################
+        
+        self.loadPreset() ## Loads show checkbox state on startup
                 
         self.setLayout(layout) # add main layout itself to this dialog
     
@@ -358,17 +353,21 @@ class UtilityToolBoxUI(QtGui.QDialog):
     #########################################################################    
         
     ################### Save/Load Preset Functions ##########################    
-    ################### Change yaml file path here ##########################
         
     def savePreset(self): ## Save Button Function
-        getShowInfo()
+        #getShowInfo()
         
         for x,y in self.cbButtonList.iteritems():
+            
+            x=str(x)
+            
             if y.isChecked() == True:
                 cbState = True
             else:
                 cbState = False
             self.getState[x] = cbState
+            
+        print self.getState
             
         if self.showRadio.isChecked() == True:           
             if not os.path.exists(getShowInfo.jobPath):
@@ -404,7 +403,45 @@ class UtilityToolBoxUI(QtGui.QDialog):
             personalConfig = "<font color=yellow>Saved PERSONAL preset.</font>"
             self.outWindow.setText(personalConfig)  
             
-         ############################################################################                               
+         
+############### Creates Checknboxes in the User Frame ##############################
+
+    def createUserCheckboxes(self):
+        
+        for x,y in self.userListCheckBox.iteritems():
+            y.setParent(None)
+            
+        self.userInSettings = {}
+           
+        if self.showRadio2.isChecked() == True:
+            whichPath = getShowInfo.jobPath
+            
+        elif self.seqRadio2.isChecked() == True:
+            whichPath = getShowInfo.seqPath
+                        
+        elif self.shotRadio2.isChecked() == True:
+            whichPath = getShowInfo.shotPath
+            
+        elif self.personalRadio2.isChecked() == True:
+            whichPath = getShowInfo.personalPath
+                
+        try:        
+            self.userInfile = open('%s/userExport.yml' % whichPath)
+            self.userInSettings = yaml.load(self.userInfile)
+            self.userInfile.close()
+                  
+            for x,y in self.userInSettings.iteritems():
+
+                cb = UtilCreateCheckBox(x, x, self.user_frame)
+                self.userListCheckBox[x] = cb.buttonVarName
+                setattr(self, x, cb)
+                
+            self.cbButtonList.update(self.userListCheckBox)
+            
+        except: pass
+         
+         
+################## Load CheckState Function -- Called when top radio button changes ####################################################                                      
         
     def loadPreset(self): ## Load Button Function
     
@@ -431,101 +468,96 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 personalConfig = "<font color=yellow>Loaded PERSONAL preset.</font>"
                 self.outWindow.setText(personalConfig)  
                 
-           ######################################################################     
+           ######################################################################
+            inSettings = yaml.load(infile)
+            infile.close()
+            
+            for x in self.cbButtonList:
+                if x in inSettings.keys():
+                    if inSettings[x]:
+                        exec('self.%s.buttonVarName.setCheckState(QtCore.Qt.Checked)' % (x))
+                    else:
+                        exec('self.%s.buttonVarName.setCheckState(QtCore.Qt.Unchecked)' % (x))    
                    
         except:
             noConfig = "<font color=red>NO CONFIG FILE EXISTS</font>"
             self.outWindow.setText(noConfig)
-  
-        inSettings = yaml.load(infile)
-        infile.close()
+                             
 
-        for x in self.cbButtonList:
-            if x in inSettings.keys():
-                if inSettings[x]:
-                    exec('self.%s.buttonVarName.setCheckState(QtCore.Qt.Checked)' % (x))
-                else:
-                    exec('self.%s.buttonVarName.setCheckState(QtCore.Qt.Unchecked)' % (x))
-                    
-    ################################################################################                
-    ############################################################################
-    ############################################################################
-    ############################################################################
-    ############################################################################
-    ############################################################################
+    ############# Export Button Function ###############################################################
                     
     def exportNetwork(self):
+        
+        if bool(self.userInSettings):
+            exportShadDict = self.userInSettings
+        
         exportText = self.exportWindow.toPlainText()
         self.userList2 = []
         self.userList2.append(exportText)
         
         for x in self.userList2:
-            cb = UtilCreateCheckBox(x, x, self.user_frame)
-            self.userListCheckBox[x] = cb.buttonVarName
-            print cb.buttonVarName
-            setattr(self, x, cb)
+            if x not in self.userListCheckBox:
+                cb = UtilCreateCheckBox(x, x, self.user_frame)
+                self.userListCheckBox[x] = cb.buttonVarName
+                setattr(self, x, cb)
             
         self.cbButtonList.update(self.userListCheckBox)
-        
+  
         getShowInfo()
         
-        print ('%s/%s.mb' % (getShowInfo.personalPath,exportText))
-        
         if self.showRadio2.isChecked() == True:
-            
-            print "show"
+
+            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.jobPath,exportText)
                                   
             if not os.path.exists(getShowInfo.jobPath):
                 os.makedirs(getShowInfo.jobPath)                       
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.jobPath,exportText), es=True, typ="mayaBinary")              
+            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.jobPath,exportText), es=True, typ="mayaBinary")
+            with open('%s/userExport.yml' % (getShowInfo.jobPath), 'w') as outfile:
+                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                
             showConfig = "<font color=yellow>Saved SHOW network.</font>"
             self.outWindow.setText(showConfig)
+            self.exportShadDict = {}
             
         elif self.seqRadio2.isChecked() == True:
             
-            print "seq"
+            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.seqPath,exportText)
                       
             if not os.path.exists(getShowInfo.seqPath):
                 os.makedirs(getShowInfo.seqPath)                            
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.seqPath,exportText), es=True, typ="mayaBinary")                           
+            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.seqPath,exportText), es=True, typ="mayaBinary")
+            with open('%s/userExport.yml' % (getShowInfo.seqPath), 'w') as outfile:
+                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                            
             seqConfig = "<font color=yellow>Saved SEQ network.</font>"
             self.outWindow.setText(seqConfig)
+            self.exportShadDict = {}
                 
         elif self.shotRadio2.isChecked() == True:
             
-            print "shot"
+            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.shotPath,exportText)
                         
             if not os.path.exists(getShowInfo.shotPath):
                 os.makedirs(getShowInfo.shotPath)                 
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.shotPath,exportText), es=True, typ="mayaBinary")                        
+            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.shotPath,exportText), es=True, typ="mayaBinary")
+            with open('%s/userExport.yml' % (getShowInfo.shotPath), 'w') as outfile:
+                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                                     
             shotConfig2 = "<font color=yellow>Saved SHOT network.</font>"
             self.outWindow.setText(shotConfig2)
-            
-            
+            self.exportShadDict = {}
+                       
         elif self.personalRadio2.isChecked() == True: 
         
-            print "personal"
+            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.personalPath,exportText)
                    
             if not os.path.exists(getShowInfo.personalPath):
                 os.makedirs(getShowInfo.personalPath)                 
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.personalPath,exportText), es=True, typ="mayaBinary")                          
+            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.personalPath,exportText), es=True, typ="mayaBinary")
+            with open('%s/userExport.yml' % (getShowInfo.personalPath), 'w') as outfile:
+                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                           
             personalConfig2 = "<font color=yellow>Saved PERSONAL network.</font>"
             self.outWindow.setText(personalConfig2)
-        
+            self.exportShadDict = {}
 
-        
-        #exportedFile = cmds.file('/home/scomly/config/toolbox/%s.mb' % exportText, es=True, typ="mayaBinary")
-
-        
-        #print self.cbButtonList
-        #print self.userListCheckBox   
-            
-            
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
-        ############################################################################
+   ################# Import Button Function #################################################################
           
     def importButtonFunction(self): ## Import Button Function
     
@@ -602,6 +634,11 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 output.append("Created Reference Spheres and Color Chart")
                 if not cmds.objExists(shotCam): 
                    warningSphere.append("Could not position and constrain ref spheres shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
+
+                   
+        for x,y in self.userListCheckBox.iteritems():
+            if y.isChecked() == True:
+                cmds.file('%s' % (self.userInSettings[x]), i=True)
                    
         ############# Output Statements #################################           
         
@@ -625,8 +662,33 @@ class UtilityToolBoxUI(QtGui.QDialog):
     def checkNoneFunction(self): ## Check None Button Function
         for x,y in self.cbButtonList.iteritems():
             y.setChecked(False)
-            
 
+################### Delete User Network Button -- Delete Button Function #############################################                        
+            
+    def deleteUser(self):
+        
+        if self.showRadio2.isChecked() == True:
+            whichPath = getShowInfo.jobPath
+            
+        elif self.seqRadio2.isChecked() == True:
+            whichPath = getShowInfo.seqPath
+                        
+        elif self.shotRadio2.isChecked() == True:
+            whichPath = getShowInfo.shotPath
+            
+        elif self.personalRadio2.isChecked() == True:
+            whichPath = getShowInfo.personalPath
+        
+        for x,y in self.userListCheckBox.iteritems():
+
+            if y.isChecked() == True:
+                os.remove(self.userInSettings[x])
+                                           
+                y.setParent(None)
+                del self.userInSettings[x]
+                                
+                with open('%s/userExport.yml' % (whichPath), 'w') as outfile:
+                    outfile.write(yaml.dump(self.userInSettings, default_flow_style=False))
                 
 ################ Toggle each line Functions ###################################
         
@@ -641,6 +703,9 @@ class UtilityToolBoxUI(QtGui.QDialog):
 
     def bottomToggle(self, event): ## Bottom list CB toggle
         flipRow(self.bottomListCheckBox)
+        
+    def userToggle(self, event): ## User list CB toggle
+        flipRow(self.userListCheckBox)
 
 def flipRow(whichList): ## toggle row of checkboxes if you click on the label
     if whichList.values()[0].isChecked() == True:
@@ -649,8 +714,9 @@ def flipRow(whichList): ## toggle row of checkboxes if you click on the label
     else:
         for x,y in whichList.iteritems():
             y.setChecked(True)
+
             
-############ Get Show/Seq/Shot ###################################################        
+############ Get Show/Seq/Shot/User Information ###################################################        
 
 def getShowInfo():
 
@@ -664,8 +730,6 @@ def getShowInfo():
     getShowInfo.jobPath = os.environ.get('M_JOB_PATH') + tackOnJob
     getShowInfo.personalPath = os.environ.get('HOME') + tackOnPersonal 
     
-
-        
 ################## Create Checkbox Class ########################################
                      
 class UtilCreateCheckBox(object):
@@ -693,11 +757,14 @@ class FrameLabel(object):
         font.setPointSize(15)
         self.frameLabelVarName.setFont(font)
         
-
-
+########################################################################
+########################################################################
 ########################################################################
 ############################### BACK END ###############################
 ########################################################################
+########################################################################
+########################################################################
+
 
 class CreateRGBLightMaterials(object):        
     def __init__(self, shaderName, R, G, B):
@@ -960,13 +1027,10 @@ def launchUI():
     except: pass
     
     vrayToolBoxUtil = UtilityToolBoxUI()
-    vrayToolBoxUtil.show()    
+    vrayToolBoxUtil.show()
+    vrayToolBoxUtil.raise_()   
         
 ################## Show Window #######################################            
  
 if __name__ == "__main__": 
     launchUI()
-
-
-    
-    
