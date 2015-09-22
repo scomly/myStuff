@@ -814,7 +814,6 @@ class CreateCatchers(object):
         if type.lower() == 'contact_shadow':           
             if not cmds.objExists('CONTACT_SHADOW_CATCHER'):
                 contactShadCatcher = cmds.shadingNode('VRayDirt', asTexture=True, name='CONTACT_SHADOW_CATCHER')       
-                cmds.connectAttr('%s.outColor' % (contactShadCatcher) ,'%s.surfaceShader' % (contactShadCatcherSG))   
                 cmds.setAttr('%s.blackColor' % (contactShadCatcher), 1,1,1, type='double3')
                 cmds.setAttr('%s.whiteColor' % (contactShadCatcher), 0,0,0, type='double3')
                 cmds.setAttr('%s.radius' % (contactShadCatcher), 10)
