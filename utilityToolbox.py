@@ -483,7 +483,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
     def exportNetwork(self):
         
         if bool(self.userInSettings):
-            exportShadDict = self.userInSettings
+            self.exportShadDict = self.userInSettings
         
         exportText = self.exportWindow.toPlainText()
         self.userList2 = []
@@ -546,7 +546,8 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 os.makedirs(getShowInfo.personalPath)                 
             exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.personalPath,exportText), es=True, typ="mayaBinary")
             with open('%s/userExport.yml' % (getShowInfo.personalPath), 'w') as outfile:
-                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                           
+                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False)) 
+            #print exportShadDict                          
             personalConfig2 = "<font color=yellow>Saved PERSONAL network'%s'.</font>" % exportText
             self.outWindow.setText(personalConfig2)
             self.exportShadDict = {}
@@ -688,9 +689,9 @@ class UtilityToolBoxUI(QtGui.QDialog):
         whichBoxes = []
         for x,y in self.userListCheckBox.iteritems():
             if y.isChecked() == True:
-                x=str(x)
-                whichBoxes.append(x)
-                whichBoxes = ''.join(whichBoxes)
+                newX=str(x)
+                whichBoxes.append(newX)
+                #whichBoxes = ''.join(whichBoxes)
    
         msgBox = QtGui.QMessageBox()
         msgBox.setText("Are you sure you want to remove %s???" % whichBoxes)
