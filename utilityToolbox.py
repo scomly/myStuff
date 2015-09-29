@@ -216,7 +216,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
         spacer18 = QtGui.QSpacerItem(10,0)
         exportLayout.addSpacerItem(spacer18)
         
-        self.exportWindow = QtGui.QTextEdit()
+        self.exportWindow = QtGui.QLineEdit()
         self.exportWindow.setMaximumWidth(200)
         self.exportWindow.setMaximumHeight(20)
         exportLayout.addWidget(self.exportWindow)
@@ -484,73 +484,79 @@ class UtilityToolBoxUI(QtGui.QDialog):
         
         if bool(self.userInSettings):
             self.exportShadDict = self.userInSettings
-        
-        exportText = self.exportWindow.toPlainText()
+                
+        exportText = self.exportWindow.text()
         self.userList2 = []
         self.userList2.append(exportText)
         
-        for x in self.userList2:
-            if x not in self.userListCheckBox:
-                cb = UtilCreateCheckBox(x, x, self.user_frame)
-                self.userListCheckBox[x] = cb.buttonVarName
-                setattr(self, x, cb)
-            
-        self.cbButtonList.update(self.userListCheckBox)
-  
-        getShowInfo()
+        if len(exportText) > 0 :
         
-        if self.showRadio2.isChecked() == True:
-
-            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.jobPath,exportText)
-                                  
-            if not os.path.exists(getShowInfo.jobPath):
-                os.makedirs(getShowInfo.jobPath)                       
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.jobPath,exportText), es=True, typ="mayaBinary")
-            with open('%s/userExport.yml' % (getShowInfo.jobPath), 'w') as outfile:
-                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                
-            showConfig = "<font color=yellow>Saved SHOW network '%s'.</font>" % exportText
-            self.outWindow.setText(showConfig)
-            self.exportShadDict = {}
-            
-        elif self.seqRadio2.isChecked() == True:
-            
-            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.seqPath,exportText)
-                      
-            if not os.path.exists(getShowInfo.seqPath):
-                os.makedirs(getShowInfo.seqPath)                            
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.seqPath,exportText), es=True, typ="mayaBinary")
-            with open('%s/userExport.yml' % (getShowInfo.seqPath), 'w') as outfile:
-                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                            
-            seqConfig = "<font color=yellow>Saved SEQ network '%s'.</font>" % exportText
-            self.outWindow.setText(seqConfig)
-            self.exportShadDict = {}
+            for x in self.userList2:
+                if x not in self.userListCheckBox:
+                    cb = UtilCreateCheckBox(x, x, self.user_frame)
+                    self.userListCheckBox[x] = cb.buttonVarName
+                    setattr(self, x, cb)
                 
-        elif self.shotRadio2.isChecked() == True:
+            self.cbButtonList.update(self.userListCheckBox)
+      
+            getShowInfo()
             
-            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.shotPath,exportText)
-                        
-            if not os.path.exists(getShowInfo.shotPath):
-                os.makedirs(getShowInfo.shotPath)                 
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.shotPath,exportText), es=True, typ="mayaBinary")
-            with open('%s/userExport.yml' % (getShowInfo.shotPath), 'w') as outfile:
-                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                                     
-            shotConfig2 = "<font color=yellow>Saved SHOT network '%s'.</font>" % exportText
-            self.outWindow.setText(shotConfig2)
-            self.exportShadDict = {}
+            if self.showRadio2.isChecked() == True:
+    
+                self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.jobPath,exportText)
+                                      
+                if not os.path.exists(getShowInfo.jobPath):
+                    os.makedirs(getShowInfo.jobPath)                       
+                exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.jobPath,exportText), es=True, typ="mayaBinary")
+                with open('%s/userExport.yml' % (getShowInfo.jobPath), 'w') as outfile:
+                    outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                
+                showConfig = "<font color=yellow>Saved SHOW network '%s'.</font>" % exportText
+                self.outWindow.setText(showConfig)
+                self.exportShadDict = {}
+            
+            elif self.seqRadio2.isChecked() == True:
+                
+                self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.seqPath,exportText)
+                          
+                if not os.path.exists(getShowInfo.seqPath):
+                    os.makedirs(getShowInfo.seqPath)                            
+                exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.seqPath,exportText), es=True, typ="mayaBinary")
+                with open('%s/userExport.yml' % (getShowInfo.seqPath), 'w') as outfile:
+                    outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                            
+                seqConfig = "<font color=yellow>Saved SEQ network '%s'.</font>" % exportText
+                self.outWindow.setText(seqConfig)
+                self.exportShadDict = {}
+                    
+            elif self.shotRadio2.isChecked() == True:
+                
+                self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.shotPath,exportText)
+                            
+                if not os.path.exists(getShowInfo.shotPath):
+                    os.makedirs(getShowInfo.shotPath)                 
+                exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.shotPath,exportText), es=True, typ="mayaBinary")
+                with open('%s/userExport.yml' % (getShowInfo.shotPath), 'w') as outfile:
+                    outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False))                                     
+                shotConfig2 = "<font color=yellow>Saved SHOT network '%s'.</font>" % exportText
+                self.outWindow.setText(shotConfig2)
+                self.exportShadDict = {}
+                           
+            elif self.personalRadio2.isChecked() == True: 
+            
+                self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.personalPath,exportText)
                        
-        elif self.personalRadio2.isChecked() == True: 
-        
-            self.exportShadDict[exportText] = '%s/%s.mb' % (getShowInfo.personalPath,exportText)
-                   
-            if not os.path.exists(getShowInfo.personalPath):
-                os.makedirs(getShowInfo.personalPath)                 
-            exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.personalPath,exportText), es=True, typ="mayaBinary")
-            with open('%s/userExport.yml' % (getShowInfo.personalPath), 'w') as outfile:
-                outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False)) 
-            #print exportShadDict                          
-            personalConfig2 = "<font color=yellow>Saved PERSONAL network'%s'.</font>" % exportText
-            self.outWindow.setText(personalConfig2)
-            self.exportShadDict = {}
+                if not os.path.exists(getShowInfo.personalPath):
+                    os.makedirs(getShowInfo.personalPath)                 
+                exportedFile = cmds.file('%s/%s.mb' % (getShowInfo.personalPath,exportText), es=True, typ="mayaBinary")
+                with open('%s/userExport.yml' % (getShowInfo.personalPath), 'w') as outfile:
+                    outfile.write(yaml.dump(self.exportShadDict, default_flow_style=False)) 
+                #print exportShadDict                          
+                personalConfig2 = "<font color=yellow>Saved PERSONAL network'%s'.</font>" % exportText
+                self.outWindow.setText(personalConfig2)
+                self.exportShadDict = {}
+                
+        else:
+            noTextName = "<font color=red>Network needs to be named before it can be exported</font>"
+            self.outWindow.setText(noTextName)
 
    ################# Import Button Function #################################################################
           
