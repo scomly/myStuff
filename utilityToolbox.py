@@ -32,7 +32,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
         self.topList = ["Red", "Green", "Blue", "White", "Black"]
         self.middleTopList = ["Shadow", "Contact_Shadow", "Fresnel", "Reflection_Occ"]
         self.middleBotList = ["Shadow_Catcher", "Plate_Projection", "Reflection_Catcher"]
-        self.bottomList = ["Ref_Spheres"]
+        self.bottomList = ["Ref_Spheres", "UV"]
         self.userList = []
       
         #############################################################################
@@ -571,7 +571,7 @@ class UtilityToolBoxUI(QtGui.QDialog):
         warningSphere = []
         warningPlate = []
         
-        shotCam = 'shotcam1:shot_camera'   
+        getShotCamInfo()
                  
         for x,y in self.cbButtonList.iteritems():
                     
@@ -620,11 +620,15 @@ class UtilityToolBoxUI(QtGui.QDialog):
                 CreateCatchers('shadow')
                 output.append("Created Shadow Catcher Vray Mtl")
                 
+            if x == "UV" and y.isChecked() == True:
+                CreateUV()
+                output.append("Created UV pass Render Element")
+                
             if x == "Plate_Projection" and y.isChecked() == True:
                 PlateProject()
                 output.append("Created Plate Projection Shader")
-                if not cmds.objExists(shotCam): 
-                   warningPlate.append("Could not link plate projection node to shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
+                if not cmds.objExists(getShotCamInfo.shotCam): 
+                    warningPlate.append("Could not link plate projection node to shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
           
             if x == "Reflection_Catcher" and y.isChecked() == True:
                 CreateCatchers('reflection')
@@ -633,12 +637,13 @@ class UtilityToolBoxUI(QtGui.QDialog):
             if x == "Ref_Spheres" and y.isChecked() == True:
                 CreateRefSphere()
                 output.append("Created Reference Spheres and Color Chart")
-                if not cmds.objExists(shotCam): 
-                   warningSphere.append("Could not position and constrain ref spheres shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
+                if not cmds.objExists(getShotCamInfo.shotCam):
+                    print 'could not find the shotcam' 
+                    warningSphere.append("Could not position and constrain ref spheres shotcam. Shotcam does not exist. Import the shotcam and run the tool again with this selection to fix the camera attachments.")
                   
         for x,y in self.userListCheckBox.iteritems():
             if y.isChecked() == True:
-                cmds.file('%s' % (self.userInSettings[x]), i=True)
+                cmds.file('%s' % (self.userInSettings[x]), i=True, ns='%s' % x)
                 output.append("Loaded '%s'" % x)
                    
         ############# Output Statements #################################           
@@ -744,7 +749,41 @@ def getShowInfo():
     getShowInfo.shotPath = os.environ.get('M_SHOT_PATH') + tackOn
     getShowInfo.seqPath = os.environ.get('M_SEQUENCE_PATH') + tackOn
     getShowInfo.jobPath = os.environ.get('M_JOB_PATH') + tackOnJob
-    getShowInfo.personalPath = os.environ.get('HOME') + tackOnPersonal 
+    getShowInfo.personalPath = os.environ.get('HOME') + tackOnPersonal
+    
+################## Get ShotCam ##################################################
+def getShotCamInfo():
+    
+    shotcamList = ['shotcam*:shot_camera']
+    getCamList = cmds.ls(shotcamList)
+    
+    if cmds.objExists('shotcam1:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam1:shot_camera')[0]
+    elif cmds.objExists('shotcam_alexaAna1:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam_alexaAna1:shot_camera')[0]
+    elif cmds.objExists('shotcam_alexaHD1:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam_alexaAna1:shot_camera')[0]
+    elif cmds.objExists('shotcam_5DMark3HD1:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam_5DMark3HD1:shot_camera')[0]        
+    elif cmds.objExists('shotcam_redDragonX1:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam_redDragonX1:shot_camera')[0]
+    elif cmds.objExists('shotcam_redDragonBarge1:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam_redDragonBarge1:shot_camera')[0]                
+    elif cmds.objExists('shotcam_fg:shot_camera'):
+        getShotCamInfo.shotCam = cmds.ls('shotcam_fg:shot_camera')[0]
+        
+        
+        
+
+    #if shotcamList > 1:
+        #if 'shotcam_fg:shot_camera' in getCamList:
+            #getCamList.remove('shotcam_fg:shot_camera')
+
+    #getShotCamInfo.shotCam = getCamList[0]
+    #print getShotCamInfo.shotCam
+    
+getShotCamInfo()
+
     
 ################## Create Checkbox Class ########################################
                      
@@ -891,13 +930,16 @@ class CreateRenderElements(object):
    
 class PlateProject(object):    
     def __init__(self):
+        
+        getShotCamInfo()
     
-        projectCam = 'shotcam1:shot_camera'
+        projectCam = getShotCamInfo.shotCam
         if not cmds.objExists('plateProject'):
-            projShader = cmds.shadingNode('VRayLightMtl', asShader=True, name='plateProject')            
+            projShader = cmds.shadingNode('VRayMtl', asShader=True, name='plateProject')            
             projShaderSG = cmds.sets(name = 'plateProject_SG', renderable=True,noSurfaceShader=True,empty=True)
             cmds.connectAttr('%s.outColor' % (projShader) ,'%s.surfaceShader' % (projShaderSG))                     
-            cmds.setAttr('%s.emitOnBackSide' % (projShader), 1)
+            cmds.setAttr('%s.useFresnel' % (projShader), 0)
+            cmds.setAttr('%s.diffuseColorAmount' % (projShader), 0)
             ## creates shader
             
             plateTexture = cmds.shadingNode('file', asTexture=True, name='plateTexture')
@@ -907,8 +949,9 @@ class PlateProject(object):
             
             fileProject = cmds.shadingNode('projection', asTexture=True, name='projectNodePlate') 
             cmds.setAttr('%s.projType' % (fileProject), 8)
-            cmds.setAttr('%s.fitType' % (fileProject), 0)
-            cmds.setAttr('%s.fitFill' % (fileProject), 1)
+            cmds.setAttr('%s.fitType' % (fileProject), 1)
+            cmds.setAttr('%s.fitFill' % (fileProject), 0)
+            cmds.setAttr('%s.alphaOffset' % (fileProject), 1)
             cmds.setAttr('%s.defaultColor' % (fileProject), 0,0,0, type='double3')
             ## creates projection node
             
@@ -920,12 +963,12 @@ class PlateProject(object):
             threeD = cmds.shadingNode('place3dTexture', asUtility=True, name='PlatePlace3d')
             ## creates place3D for camera
             
-            cmds.connectAttr('%s.outColor' % (fileProject), '%s.color' % (projShader))
+            cmds.connectAttr('%s.outColor' % (fileProject), '%s.illumColor' % (projShader))
             cmds.connectAttr('%s.outColor' % (plateTexture), '%s.image' % (fileProject))
             cmds.connectAttr('%s.worldInverseMatrix' % (threeD), '%s.placementMatrix' % (fileProject))
-            cmds.connectAttr('%s.outAlpha' % (fileProject), '%s.opacity.opacityR' % (projShader))
-            cmds.connectAttr('%s.outAlpha' % (fileProject), '%s.opacity.opacityG' % (projShader))
-            cmds.connectAttr('%s.outAlpha' % (fileProject), '%s.opacity.opacityB' % (projShader))
+            cmds.connectAttr('%s.outAlpha' % (fileProject), '%s.opacityMapR' % (projShader))
+            cmds.connectAttr('%s.outAlpha' % (fileProject), '%s.opacityMapG' % (projShader))
+            cmds.connectAttr('%s.outAlpha' % (fileProject), '%s.opacityMapB' % (projShader))
             ## connects texture, alpha, shader, projection, and 3D placement
                 
             place2DConnections = ('coverage', 'translateFrame', 'rotateFrame', 'mirrorU', 'mirrorV', 'stagger', 'wrapU', 'wrapV', 'repeatUV',
@@ -944,7 +987,7 @@ class PlateProject(object):
             ## connects shotcam to the proj cam if it exists
 
 ## example creation ##   
-## createPlateProject = PlateProject()  
+## createPlateProject = PlateProject() 
   
 class CreateRefSphere(object):    
     def __init__(self):
@@ -979,6 +1022,7 @@ class CreateRefSphere(object):
                 
         if not cmds.objExists('chromeBall'):    
             refBall = cmds.polySphere(name='chromeBall', r=2.5)
+            cmds.setAttr('%s.translate' % (refBall[0]), 7,6,0)
             cmds.delete(refBall, ch=True)  
             ## creates chrome ball geo
             
@@ -993,12 +1037,11 @@ class CreateRefSphere(object):
             chartShaderSG = cmds.sets(name = 'chartShaderSG', renderable=True,noSurfaceShader=True,empty=True)
             cmds.connectAttr('%s.outColor' % (chartShader) ,'%s.surfaceShader' % (chartShaderSG))
             cmds.setAttr('%s.emitOnBackSide' % (chartShader), 1)
-
             ## creates color chart VrayLightMtl
         
         if not cmds.objExists('colorChart'):    
             colorChart =  cmds.polyPlane(name='colorChart', h=5,w=5,sx=1,sy=1)
-            cmds.setAttr('%s.translate' % (colorChart[0]), 7,3,0)
+            #cmds.setAttr('%s.translate' % (colorChart[0]), 0,6,0)
             cmds.setAttr('%s.rotateX' % (colorChart[0]), 90)
             ## creates color chart geo
             
@@ -1028,20 +1071,35 @@ class CreateRefSphere(object):
             refSetupGroupMembers = (colorChart[0], refBall[0], diffBall[0])
             translateGroup = cmds.group(refSetupGroupMembers, name=refSetupTransGroup)
             refSetupGroup = cmds.group(translateGroup, name=refSetupGroupName)
-
-        shotCam = 'shotcam1:shot_camera'
-                
-        if cmds.objExists(shotCam):
-            refSetupGroup = cmds.ls('RefSphere_GRP')[0]
-            translateGroup = cmds.ls('TranslateThis')[0]  
-            getIfConnect = cmds.listConnections('%s.tx' % (refSetupGroup), d=False, s=True)
-            if getIfConnect == None:
-                cmds.parentConstraint(shotCam, refSetupGroup, mo=False)
-                cmds.setAttr('%s.translate' % (translateGroup), -50, -25, -150)
+        
+        getShotCamInfo()
+        
+        if getShotCamInfo.shotCam > 0:               
+            if cmds.objExists(getShotCamInfo.shotCam):
+                refSetupGroup = cmds.ls('RefSphere_GRP')[0]
+                translateGroup = cmds.ls('TranslateThis')[0]  
+                getIfConnect = cmds.listConnections('%s.tx' % (refSetupGroup), d=False, s=True)
+                if getIfConnect == None:
+                    cmds.parentConstraint(getShotCamInfo.shotCam, refSetupGroup, mo=False)
+                    cmds.setAttr('%s.translate' % (translateGroup), 0, 0, -100)
             ## creates groups and constrains to camera
-
+            
 ## example creation ##   
-## createRefSpheres = CreateRefSphere()   
+## createRefSpheres = CreateRefSphere()
+
+class CreateUV(object):
+    def __init__(self):        
+        if not cmds.objExists('vrayRE_RE_UV'):
+            uvSampler = cmds.shadingNode('samplerInfo', asUtility=True, name='UVsampler')                                
+            uvExtraTex = vfb.extraTex('vrayRE_UV', uvSampler, explicit_channel='UV', enabled=False)
+            cmds.connectAttr('%s.uCoord' % uvSampler, 'vrayRE_UV.vray_texture_extratexR')       
+            cmds.connectAttr('%s.vCoord' % uvSampler, 'vrayRE_UV.vray_texture_extratexG') 
+            
+## example creation ##   
+## createRefSpheres = CreateUV()            
+            
+            
+            
 
 def launchUI():
     global vrayToolBoxUtil
