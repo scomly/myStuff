@@ -1,8 +1,16 @@
+
+import lighting.arnold.settings
+lighting.arnold.settings.initPlugin()
+
+
+# -*- coding: utf-8 -*-
 from PySide import QtGui
 from PySide import QtCore
 import maya.cmds as cmds
 import maya.OpenMayaUI as mui
 import shiboken
+import yaml
+import os
 
 ########################################################################
 ############################### GUI ####################################
@@ -32,6 +40,9 @@ class ObjectProperty(QtGui.QDialog):
         #############################################################################
 
         self.createLayout() # runs function below
+        
+        
+    
         
     ################################################################################    
     ##################### Layout Creation ##########################################    
@@ -154,7 +165,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.selfShadButton.setFont(font)
-        self.selfShadButton.setChecked(True)
+        self.selfShadButton.setChecked(False)
         
         self.opaqueButton = QtGui.QCheckBox('Opaque')
         self.aiStatsButtonList.append(self.opaqueButton)
@@ -162,7 +173,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.opaqueButton.setFont(font)
-        self.opaqueButton.setChecked(True)
+        self.opaqueButton.setChecked(False)
         
         self.visDiffButton = QtGui.QCheckBox('Visible in Diffuse')
         self.aiStatsButtonList.append(self.visDiffButton)
@@ -170,7 +181,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.visDiffButton.setFont(font)
-        self.visDiffButton.setChecked(True)
+        self.visDiffButton.setChecked(False)
         
         self.visGlossButton = QtGui.QCheckBox('Visible in Glossy')
         self.aiStatsButtonList.append(self.visGlossButton)
@@ -178,7 +189,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.visGlossButton.setFont(font)
-        self.visGlossButton.setChecked(True)
+        self.visGlossButton.setChecked(False)
         
         self.matteButton = QtGui.QCheckBox('Matte')
         self.aiStatsButtonList.append(self.matteButton)
@@ -186,7 +197,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.matteButton.setFont(font)
-        self.matteButton.setChecked(True)
+        self.matteButton.setChecked(False)
         
         self.traceSetButton = QtGui.QCheckBox('Trace Sets')
         self.aiStatsButtonList.append(self.traceSetButton)
@@ -194,7 +205,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.traceSetButton.setFont(font)
-        self.traceSetButton.setChecked(True)
+        self.traceSetButton.setChecked(False)
         
         self.spacer2 = QtGui.QSpacerItem(0,18)
         self.aiStats_frame.layout().addSpacerItem(self.spacer2)
@@ -228,7 +239,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.subTypeButton.setFont(font)
-        self.subTypeButton.setChecked(True)
+        self.subTypeButton.setChecked(False)
         
         self.subIterButton = QtGui.QCheckBox('Subdiv Iterations')
         self.subDButtonList.append(self.subIterButton)
@@ -236,7 +247,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.subIterButton.setFont(font)
-        self.subIterButton.setChecked(True)
+        self.subIterButton.setChecked(False)
         
         self.spacer3 = QtGui.QSpacerItem(0,102)
         self.subD_frame.layout().addSpacerItem(self.spacer3)
@@ -271,7 +282,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.dispHeightButton.setFont(font)
-        self.dispHeightButton.setChecked(True)        
+        self.dispHeightButton.setChecked(False)        
 
         self.dispPadButton = QtGui.QCheckBox('Disp Padding')
         self.dispButtonList.append(self.dispPadButton)
@@ -279,7 +290,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.dispPadButton.setFont(font)
-        self.dispPadButton.setChecked(True) 
+        self.dispPadButton.setChecked(False) 
 
         self.dispZeroButton = QtGui.QCheckBox('Disp Zero Value')
         self.dispButtonList.append(self.dispZeroButton)
@@ -287,7 +298,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.dispZeroButton.setFont(font)
-        self.dispZeroButton.setChecked(True) 
+        self.dispZeroButton.setChecked(False) 
 
         self.autoBumpButton = QtGui.QCheckBox('Auto Bump')
         self.dispButtonList.append(self.autoBumpButton)
@@ -295,7 +306,7 @@ class ObjectProperty(QtGui.QDialog):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.autoBumpButton.setFont(font)
-        self.autoBumpButton.setChecked(True)
+        self.autoBumpButton.setChecked(False)
                 
         self.spacer4 = QtGui.QSpacerItem(0,60)
         self.disp_frame.layout().addSpacerItem(self.spacer4)
@@ -316,7 +327,8 @@ class ObjectProperty(QtGui.QDialog):
         setLabelFont.setPointSize(10)
         self.createSet_label.setFont(setLabelFont)
         lineEditHorizLayout.addWidget(self.createSet_label)
-        self.createSet_label.setMaximumWidth(70)              
+        self.createSet_label.setMaximumWidth(70)   
+                   
         self.createSet_lineEdit = QtGui.QLineEdit()
         self.createSet_lineEdit.setMaximumWidth(200)
         lineEditHorizLayout.addWidget(self.createSet_lineEdit)
@@ -354,6 +366,8 @@ class ObjectProperty(QtGui.QDialog):
         if len(getExistingText) > 0:
             self.outputText = []       
         getSelect = cmds.ls(sl=True)[0]
+              
+        
         if cmds.objectType(getSelect, isType='objectSet') == True:
             theSet = getSelect            
             if self.primVisButton.isChecked()==True:
@@ -424,13 +438,13 @@ class ObjectProperty(QtGui.QDialog):
                     print self.outputText.append("<font color=yellow>Visible in Glossy Already Exists<font/><br>")
             if self.matteButton.isChecked()==True:
                 if cmds.attributeQuery('aiMatte',node=theSet,ex=True) == False: 
-                    addMatte = cmds.addAttr(ln='aiMatte',at='bool',dv=1)
+                    addMatte = cmds.addAttr(ln='aiMatte',at='bool',dv=0)
                     self.outputText.append('Created aiMatte attribute') 
                 else:
                     self.outputText.append("<font color=yellow>Matte Already Exists<font/>")
             if self.traceSetButton.isChecked()==True:
                 if cmds.attributeQuery('aiTraceSets',node=theSet,ex=True) == False: 
-                    addAiTraceSets = cmds.addAttr(ln='aiTraceSets',at='bool',dv=1)
+                    addAiTraceSets = cmds.addAttr(ln='aiTraceSets',dt='string')
                     self.outputText.append('Created Trace Sets attribute') 
                 else:
                     self.outputText.append("<font color=yellow>Trace Sets Already Exists<font/><br>")
@@ -490,7 +504,7 @@ class ObjectProperty(QtGui.QDialog):
                     self.outputText.append("<font color=yellow>Disp Zero Already Exists<font/><br>")
             if self.autoBumpButton.isChecked()==True:
                 if cmds.attributeQuery('aiDispAutobump',node=theSet,ex=True) == False: 
-                    addBoundsPad = cmds.addAttr(ln='aiDispAutobump',at='bool',dv=1)
+                    addBoundsPad = cmds.addAttr(ln='aiDispAutobump',at='bool',dv=0)
                     self.outputText.append('Created Disp Auto Bump attribute')                     
                 else:
                     self.outputText.append("<font color=yellow>AutoBump Already Exists<font/>")   
@@ -512,30 +526,41 @@ class ObjectProperty(QtGui.QDialog):
     def createSet(self):
         getExistingText = self.outWindow.toPlainText()
         setName = self.createSet_lineEdit.text()
-        geoSelection = cmds.ls(sl=True)
-        if cmds.objectType(geoSelection, isType='objectSet') == False:
-            if len(geoSelection) > 0:
-                if len(setName) > 0:
-                    if not cmds.objExists(setName):
-                        createSet = cmds.sets(name=setName)
-                        cmds.select(createSet,r=True,ne=True)
-                        self.combineAllChecks()
-                    else:
-                        if len(getExistingText) > 0:
-                            self.outputText = []  
-                        self.outputText.append("<font color=yellow>A SET WITH THAT NAME ALREADY EXISTS<font/>")
+        geoOrigSelection = cmds.ls(sl=True)
+    
+        #### Convert any shape selections for transforms ####
+        selectConvert = []
+        
+        for x in geoOrigSelection:
+            print x
+            if cmds.nodeType(x)!='transform':
+                findTransform = cmds.listRelatives(x, parent=True)[0]
+                selectConvert.append(findTransform)
+            else:
+                selectConvert.append(x)
+                
+        cmds.select(selectConvert)
+                
+        if len(selectConvert) > 0:
+            if len(setName) > 0:
+                if not cmds.objExists(setName):
+                    createSet = cmds.sets(name=setName)
+                    cmds.select(createSet,r=True,ne=True)
+                    self.combineAllChecks()
                 else:
                     if len(getExistingText) > 0:
+                        print "five"
                         self.outputText = []  
-                    self.outputText.append("<font color=yellow>PLEASE NAME THE SET<font/>")
+                    self.outputText.append("<font color=yellow>A SET WITH THAT NAME ALREADY EXISTS<font/>")
             else:
                 if len(getExistingText) > 0:
                     self.outputText = []  
-                self.outputText.append("<font color=yellow>PLEASE SELECT GEOMETRY FOR THE SET<font/>")
+                self.outputText.append("<font color=yellow>PLEASE NAME THE SET<font/>")
         else:
             if len(getExistingText) > 0:
                 self.outputText = []  
-            self.outputText.append("<font color=yellow>YOU HAVE A SET SELECTED. PLEASE SELECT GEOMETRY OR GROUPS.<font/>")
+            self.outputText.append("<font color=yellow>PLEASE SELECT GEOMETRY FOR THE SET<font/>")
+
             
         self.getOutputText()
             
@@ -564,6 +589,18 @@ def flipRow(whichList):
             x.setChecked(False)
             
 #####################################################################
+
+class LineEdit(QtGui.QLineEdit):
+    """Custom QLineEdit."""
+
+    def keyPressEvent(self, event):
+        """Override key press event."""
+        key = event.key()
+        if key == QtCore.Qt.Key_Control or key == QtCore.Qt.Key_Shift:
+            pass
+        else:
+            super(LineEdit, self).keyPressEvent(event)
+
 
 def launchUI():
     global obPropUtil
