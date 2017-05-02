@@ -1,9 +1,3 @@
-
-import lighting.arnold.settings
-lighting.arnold.settings.initPlugin()
-
-
-# -*- coding: utf-8 -*-
 from PySide import QtGui
 from PySide import QtCore
 import maya.cmds as cmds
@@ -11,6 +5,10 @@ import maya.OpenMayaUI as mui
 import shiboken
 import yaml
 import os
+import lighting.arnold.settings
+
+####### Load Arnold #######
+lighting.arnold.settings.initPlugin()
 
 ########################################################################
 ############################### GUI ####################################
@@ -19,7 +17,6 @@ import os
 def getMayaWindow():
     pointer = mui.MQtUtil.mainWindow()
     return shiboken.wrapInstance(long(pointer), QtGui.QWidget)
-    
     
 class ObjectProperty(QtGui.QDialog):
 
@@ -40,10 +37,7 @@ class ObjectProperty(QtGui.QDialog):
         #############################################################################
 
         self.createLayout() # runs function below
-        
-        
-    
-        
+                
     ################################################################################    
     ##################### Layout Creation ##########################################    
     ################################################################################
@@ -157,7 +151,7 @@ class ObjectProperty(QtGui.QDialog):
         
         self.aiStatsframeLabelVarName.mouseReleaseEvent = self.aiToggle
 
-            ##### Checkboxes #####
+        ######## Checkboxes ########
         
         self.selfShadButton = QtGui.QCheckBox('Self Shadows')
         self.aiStatsButtonList.append(self.selfShadButton)
@@ -327,8 +321,7 @@ class ObjectProperty(QtGui.QDialog):
         setLabelFont.setPointSize(10)
         self.createSet_label.setFont(setLabelFont)
         lineEditHorizLayout.addWidget(self.createSet_label)
-        self.createSet_label.setMaximumWidth(70)   
-                   
+        self.createSet_label.setMaximumWidth(70)                      
         self.createSet_lineEdit = QtGui.QLineEdit()
         self.createSet_lineEdit.setMaximumWidth(200)
         lineEditHorizLayout.addWidget(self.createSet_lineEdit)
@@ -353,11 +346,11 @@ class ObjectProperty(QtGui.QDialog):
         layout.addWidget(self.outWindow)
         self.outWindow.setMaximumHeight(275)
         
-        ################################################################################################        
+        #######################################################################################        
                 
         self.setLayout(layout)
         
-################################################################################################
+###############################################################################################
     
   ######### Check if checked ##########################
   
@@ -365,9 +358,9 @@ class ObjectProperty(QtGui.QDialog):
         getExistingText = self.outWindow.toPlainText()
         if len(getExistingText) > 0:
             self.outputText = []       
+
         getSelect = cmds.ls(sl=True)[0]
-              
-        
+      
         if cmds.objectType(getSelect, isType='objectSet') == True:
             theSet = getSelect            
             if self.primVisButton.isChecked()==True:
@@ -560,11 +553,9 @@ class ObjectProperty(QtGui.QDialog):
             if len(getExistingText) > 0:
                 self.outputText = []  
             self.outputText.append("<font color=yellow>PLEASE SELECT GEOMETRY FOR THE SET<font/>")
-
-            
+         
         self.getOutputText()
             
-
 ######################### Row Toggles #########################
 
     def rStatsToggle(self, event):
@@ -580,7 +571,6 @@ class ObjectProperty(QtGui.QDialog):
         flipRow(self.dispButtonList)        
        
 def flipRow(whichList):
-    
     if whichList[0].isChecked() == False:
         for x in whichList:
             x.setChecked(True)
@@ -592,7 +582,6 @@ def flipRow(whichList):
 
 class LineEdit(QtGui.QLineEdit):
     """Custom QLineEdit."""
-
     def keyPressEvent(self, event):
         """Override key press event."""
         key = event.key()
@@ -600,7 +589,6 @@ class LineEdit(QtGui.QLineEdit):
             pass
         else:
             super(LineEdit, self).keyPressEvent(event)
-
 
 def launchUI():
     global obPropUtil
