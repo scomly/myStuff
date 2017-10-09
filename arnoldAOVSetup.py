@@ -3,8 +3,6 @@ from PySide import QtCore
 import maya.cmds as cmds
 import maya.OpenMayaUI as mui
 import shiboken
-import yaml
-import os
 
 ########################################################################
 ############################### GUI ####################################
@@ -33,28 +31,52 @@ class AOVSetUI(QtGui.QDialog):
                 
         self.stashFramesCreateButton = {}
         self.stashRenderButtons = {}
+        self.stashReverseRenderButtons = {}
         self.stashRenderButtonsPerFrame = {}
         self.stashButtonsTwoFrame = {}
+        self.stashToggleButton = {}
+        self.stashOverrides = []
       
         #############################################################################
 
         self.createLayout() # runs function below
+        
     
     ################################################################################    
     ##################### Layout Creation ##########################################    
     ################################################################################
         
+
     def createLayout(self):
         
         layout = QtGui.QVBoxLayout() # main layout
-        #self.setMinimumHeight(650)
-        #self.setMinimumWidth(750)
-        layout.setSpacing(0)
+        #self.setMinimumHeight(700)
+        #self.setMinimumWidth(1000)
+        layout.layout().setContentsMargins(0,0,0,0)
+        layout.layout().setSpacing(0)
+        
+        
+        scroll_area = QtGui.QScrollArea(self)
+        scroll_area_content = QtGui.QFrame(self)
+        
+        scroll_area_content.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
 
-        self.framesHorizLayout = QtGui.QHBoxLayout() # layout for frames
-        layout.addLayout(self.framesHorizLayout)
+        scroll_area.setWidget(scroll_area_content)
+        scroll_area.setWidgetResizable(True)
+        
+        layout.addWidget(scroll_area)       
+
+        self.framesHorizLayout = QtGui.QHBoxLayout(scroll_area_content) # layout for frames
+        self.framesHorizLayout.layout().setContentsMargins(0,0,0,0)
+        self.framesHorizLayout.layout().setSpacing(0)
+        
+        
+        
+     
+        
         layout.setAlignment(QtCore.Qt.AlignTop)
-               
+
+     
         ##### Run Functions #####
         self.getRenderLayers()
         self.getAllAOVS()
@@ -85,13 +107,16 @@ class AOVSetUI(QtGui.QDialog):
 
                 aovSplit = aov.split('aiAOV_')[1]                
                 buttonVarName = (self.frameVarName + aovSplit + 'checkbox')                
-                createButtons = UtilCreateCheckBox(buttonVarName, aovSplit, frameCreate.frameVarName)
+                createButtons = UtilCreateCheckBox(buttonVarName, aovSplit, frameCreate.frameVarName, self.returnSignal)
                 self.renderLayerButtons[aovSplit] = createButtons.buttonVarName
                 
                 #### Link Button Labels to Button IDs ####
                 self.stashRenderButtons[buttonVarName] = createButtons.buttonVarName
                 #print self.stashRenderButtons
-
+                
+                #### Reverse Button IDs to Labels ######
+                self.stashReverseRenderButtons[createButtons.buttonVarName] = buttonVarName
+                
                 cbList.append(buttonVarName)
                               
                 #### Change the Aov State Dictoinary Per Render Layer (Not Default Render Layer) #####                
@@ -113,21 +138,26 @@ class AOVSetUI(QtGui.QDialog):
                              
                 #### Load checkbox state from scene #######
                 for node in self.renderLayerButtons:
+
                     setChecked = self.defaultRenderLayerState[node]
                     self.renderLayerButtons[node].setChecked(setChecked)
                     
                     #### Make overrides orange ####
                     if node in self.makeColor:
+                        self.stashOverrides.append(self.renderLayerButtons[node])
                         setColor = self.makeColor[node]
                         self.renderLayerButtons[node].setStyleSheet(setColor)
                         
             self.spacer1 = QtGui.QSpacerItem(0,50)
             frameCreate.frameVarName.layout().addSpacerItem(self.spacer1)
+            
+            ####### Create Toggle Button #####
+            self.setToggleVarName = (x + 'Toggle')
+            createToggleButton = UtilCreateToggleButton(self.setToggleVarName,frameCreate.frameVarName, self.toggleFunc)
                         
             ####### Create Set Button #######
             self.setButtonVarName = (x + 'setButton')
-            createSetButton = UtilCreateSetButton(self.setButtonVarName,frameCreate.frameVarName, self.printButtonStatus)
-            #print createSetButton.setButtonVarName
+            createSetButton = UtilCreateSetButton(self.setButtonVarName,frameCreate.frameVarName, self.setButtonStatus)
             
             ###### Link Set Button in Frame to Frame/RenderLayer #######
             self.stashFramesCreateButton[createSetButton.setButtonVarName] = x
@@ -138,15 +168,23 @@ class AOVSetUI(QtGui.QDialog):
             #print self.stashRenderButtonsPerFrame
             
             #### Link Buttons to Frame they live in ####
-            self.stashButtonsTwoFrame[frameCreate.frameLabelVarName] = cbList
+            self.stashButtonsTwoFrame[frameCreate.frameVarName] = cbList
             #print self.stashButtonsTwoFrame
             
-
+            #### Link Toggle Button to Set Button in same Frame ####
+            self.stashToggleButton[createToggleButton.setToggleVarName] = frameCreate.frameVarName
+            #print self.stashToggleButton
             
+            self.spacer2 = QtGui.QSpacerItem(0,100)
+            self.framesHorizLayout.layout().addSpacerItem(self.spacer2)
 
     #################################################################################
 
         self.setLayout(layout) # add main layout itself to this dialog
+        getSize = scroll_area_content.sizeHint()
+        getSize.setWidth(min(2000, getSize.width()))
+        getSize.setHeight(min(1000, getSize.height()))
+        self.resize(getSize)
         
     #################################################################################
 
@@ -157,43 +195,88 @@ class AOVSetUI(QtGui.QDialog):
     
     def getRenderLayers(self):
         self.getRenderLayers = cmds.ls(type='renderLayer')
+        ### to make sure default render layer is first in the list ####
+        self.getRenderLayers.remove('defaultRenderLayer')
+        self.getRenderLayers.insert(0,'defaultRenderLayer')
         
     def setDefaultRenderState(self):
         if cmds.editRenderLayerGlobals( query=True, currentRenderLayer=True ) != "defaultRenderLayer":
             cmds.editRenderLayerGlobals(currentRenderLayer='defaultRenderLayer')
         for node in self.getAOVs:
+            nodeSplit = []
             self.getInitState = cmds.getAttr("%s.enabled" % node)
-            node = node.split('aiAOV_')[1]
-            self.defaultRenderLayerState[node] = self.getInitState
+            nodeSplit = node.split('aiAOV_')[1]
+            self.defaultRenderLayerState[nodeSplit] = self.getInitState
         
     def getAllAOVS(self):
         self.getAOVs = cmds.ls(type='aiAOV')
                             
-    def printButtonStatus(self):
+    def setButtonStatus(self):
         splitName = []
         addName = []
-        sender = []       
+        sender = []
+        newX = []
+        newXTwo = []
+        newY = []
+        newYTwo = []     
         sender = self.sender()        
         newKeys = self.stashRenderButtonsPerFrame[sender]
+        #print newKeys
         for x in newKeys:
+            #print x#
             splitName = x.split('frame')[1]
             splitName = splitName.split('checkbox')[0]
-            addName = ('aiAOV_%s.enabled' % splitName)            
+            addName = ('aiAOV_%s.enabled' % splitName)
+
             if self.stashFramesCreateButton[sender] == "defaultRenderLayer":
                 if self.stashRenderButtons[x].isChecked() == True:               
                     cmds.setAttr(addName, 1)
                 else:
                     cmds.setAttr(addName, 0)                    
-            else:                
+            else:
+
                 if self.stashRenderButtons[x].isChecked()==True and cmds.getAttr(addName) == 0:  
                     self.checkStatusSet(layer=self.stashFramesCreateButton[sender],value=1,attr=addName)            
                     self.stashRenderButtons[x].setStyleSheet("color: orange")
+                    self.stashOverrides.append(self.stashRenderButtons[x])  ### problem is here I think
+
+
                 if self.stashRenderButtons[x].isChecked()==False and cmds.getAttr(addName) == 1:
                     self.checkStatusSet(layer=self.stashFramesCreateButton[sender],value=0,attr=addName)                    
-                    self.stashRenderButtons[x].setStyleSheet("color: orange")                                     
-        if self.stashFramesCreateButton[sender] == "defaultRenderLayer":                
-            launchUI()
-            
+                    self.stashRenderButtons[x].setStyleSheet("color: orange")
+
+                    
+                if self.stashRenderButtons[x].isChecked()==True and cmds.getAttr(addName) == 1:  
+                    cmds.editRenderLayerAdjustment(addName, layer=self.stashFramesCreateButton[sender], remove=True)        
+                    self.stashRenderButtons[x].setStyleSheet("color: active")
+
+                if self.stashRenderButtons[x].isChecked()==False and cmds.getAttr(addName) == 0:
+                    cmds.editRenderLayerAdjustment(addName, layer=self.stashFramesCreateButton[sender], remove=True)        
+                    self.stashRenderButtons[x].setStyleSheet("color: active")
+                    
+
+                    
+                    
+
+                                                      
+        if self.stashFramesCreateButton[sender] == "defaultRenderLayer":
+            #print self.stashOverrides
+            test = {}
+            newX = []
+            newXTwo = []
+            newY = []
+            newYTwo = []
+            #setChecked = []
+            for x in self.stashRenderButtons:
+                y = self.stashRenderButtons[x]
+                if y not in self.stashOverrides:
+                    self.setDefaultRenderState()
+                    newX = x.split('frame')[1]
+                    newXTwo = newX.split('checkbox')[0]
+                    setChecked = self.defaultRenderLayerState[newXTwo]
+                    self.stashRenderButtons[x].setChecked(setChecked)
+
+          
     def checkStatusSet(self,layer=None,value=None,attr=None):
         cmds.editRenderLayerAdjustment(attr,layer=layer)
         connection_list = cmds.listConnections(attr, plugs=True)
@@ -203,6 +286,67 @@ class AOVSetUI(QtGui.QDialog):
                 if attr_component_list[0] == layer:
                     attr = ".".join(attr_component_list[0:-1])
                     cmds.setAttr("%s.value" % attr, value)
+                                        
+    def toggleFunc(self):
+        getFlip = []
+        getButtons = []
+        toggleSend = self.sender()
+        getFrameFlip = self.stashToggleButton[toggleSend]
+        getButtons = self.stashButtonsTwoFrame[getFrameFlip]
+        getOne = self.stashRenderButtons[getButtons[0]]
+        if getOne.isChecked() == False:            
+            for x in getButtons:
+                self.stashRenderButtons[x].setChecked(True)
+        else:
+            for x in getButtons:
+                self.stashRenderButtons[x].setChecked(False)
+        
+        
+    def returnSignal(self):
+        splitName = []
+        addName = []
+        sender = []       
+        sender = self.sender()
+        removeItem = self.stashReverseRenderButtons[sender]
+        splitItem = removeItem.split('frame')[1]
+        splitItemTwo = splitItem.split('checkbox')[0]
+        addAttribute = ('aiAOV_%s.enabled' % splitItemTwo)
+        self.layer = removeItem.split('frame')[0]
+        getConnections = cmds.listConnections(addAttribute, plugs=True)
+        if getConnections > 0:
+            for connection in getConnections:    
+                attr_component_list = connection.split(".") 
+                if attr_component_list[0] == self.layer:    
+                    self.getSender =  self.sender()
+                    self.menu = QtGui.QMenu()
+                    deleteAction = QtGui.QAction('Remove Override', self)
+                    deleteAction.triggered.connect(self.removeOverride)
+                    self.menu.addAction(deleteAction)
+                    self.menu.popup(QtGui.QCursor.pos())
+        
+        
+    def removeOverride(self):
+        #splitName = []
+        #addName = []
+        #sender = []       
+        sender = self.getSender
+        removeItem = self.stashReverseRenderButtons[sender]
+        splitItem = removeItem.split('frame')[1]
+        splitItem = splitItem.split('checkbox')[0]
+        addAttribute = ('aiAOV_%s.enabled' % splitItem)
+        cmds.editRenderLayerAdjustment(addAttribute, layer=self.layer, remove=True)
+        getDefaultState = cmds.getAttr(addAttribute)
+        if sender in self.stashOverrides:
+            self.stashOverrides.remove(sender)
+        #print sender
+        if getDefaultState == 1:
+            sender.setChecked(True)          
+            sender.setStyleSheet("color: active")
+        else:
+            sender.setChecked(False)          
+            sender.setStyleSheet("color: active")            
+
+        
                     
 ################# Create Frame Class ###########################################
         
@@ -218,7 +362,8 @@ class Frame(object):
         self.parentLayout.addWidget(self.frameVarName)        
         self.frameVarName.setLayout(QtGui.QVBoxLayout())              
         self.frameVarName.layout().setAlignment(QtCore.Qt.AlignTop)
-        #self.frameVarName.setMinimumHeight(500)               
+        self.frameVarName.setMinimumHeight(100)
+        #self.frameVarName.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Maximum)               
         self.frameLabelVarName = QtGui.QLabel(frameLabelName)
         self.frameVarName.layout().addWidget(self.frameLabelVarName)
         font = QtGui.QFont()
@@ -229,34 +374,53 @@ class Frame(object):
 ################## Create Checkbox Class ########################################
             
 class UtilCreateCheckBox(object):
-    def __init__(self, buttonVarName, buttonLabelName, frame):
+    def __init__(self, buttonVarName, buttonLabelName, frame, rmbFunc):
         
         self.buttonVarName = buttonVarName
-        self.frame = frame
+        self.frame = frame        
+        self.rmbFunc = rmbFunc
         
         self.buttonVarName = QtGui.QCheckBox(buttonLabelName)
-        #self.buttonVarName.setStyleSheet("color: white")
         self.frame.layout().addWidget(self.buttonVarName)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.buttonVarName.setFont(font)
         self.buttonVarName.setChecked(True)
         
+        self.buttonVarName.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.buttonVarName.customContextMenuRequested.connect(self.rmbFunc)
+        
+################## Create Toggle Class ########################################
+
+class UtilCreateToggleButton(object):
+    def __init__(self, setToggleVarName, frame, toggleFunc):
+        
+        self.setToggleVarName = setToggleVarName
+        self.frame = frame
+        self.toggleFunc = toggleFunc
+        
+        self.setToggleVarName = QtGui.QPushButton('TOGGLE ROW')
+        self.frame.layout().addWidget(self.setToggleVarName)
+        self.setToggleVarName.setMinimumHeight(25)                
+        self.setToggleVarName.setMinimumWidth(200)
+            
+        self.setToggleVarName.clicked.connect(self.toggleFunc) ## clicked
+        
 ################## Create Set Button Class ########################################
             
 class UtilCreateSetButton(object):
-    def __init__(self, setButtonVarName, frame, printFunc):
+    def __init__(self, setButtonVarName, frame, setFunc):
         
         self.setButtonVarName = setButtonVarName
         self.frame = frame
-        self.printFunc = printFunc
+        self.setFunc = setFunc
         
         self.setButtonVarName = QtGui.QPushButton('SET')
         self.frame.layout().addWidget(self.setButtonVarName)
         self.setButtonVarName.setMinimumHeight(50)                
         self.setButtonVarName.setMinimumWidth(200)
             
-        self.setButtonVarName.clicked.connect(self.printFunc) ## clicked
+        self.setButtonVarName.clicked.connect(self.setFunc) ## clicked
 
 ########################################################################################
 
