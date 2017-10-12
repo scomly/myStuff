@@ -131,6 +131,10 @@ class ObjectProperty(QtGui.QDialog):
         self.rStatsSetButton = QtGui.QPushButton("Add")
         self.rStats_frame.layout().addWidget(self.rStatsSetButton)
         self.rStatsSetButton.clicked.connect(self.checkRenderStats) ## clicked
+        
+        self.rStatsRemoveButton = QtGui.QPushButton("Remove")
+        self.rStats_frame.layout().addWidget(self.rStatsRemoveButton)
+        self.rStatsRemoveButton.clicked.connect(self.deleteRenderStats) ## clicked
               
         #################### Ai Render State Frame ##############################################
         
@@ -207,6 +211,10 @@ class ObjectProperty(QtGui.QDialog):
         self.aiStatsSetButton = QtGui.QPushButton("Add")
         self.aiStats_frame.layout().addWidget(self.aiStatsSetButton)
         self.aiStatsSetButton.clicked.connect(self.checkAiRenderStats) ## clicked
+        
+        self.aiStatsRemoveButton = QtGui.QPushButton("Remove")
+        self.aiStats_frame.layout().addWidget(self.aiStatsRemoveButton)
+        self.aiStatsRemoveButton.clicked.connect(self.deleteAiRenderStats) ## clicked
 
         #################### SubD Frame ##############################################
         
@@ -249,6 +257,10 @@ class ObjectProperty(QtGui.QDialog):
         self.subDSetButton = QtGui.QPushButton("Add")
         self.subD_frame.layout().addWidget(self.subDSetButton)
         self.subDSetButton.clicked.connect(self.checkSubD) ## clicked
+
+        self.subDRemoveButton = QtGui.QPushButton("Remove")
+        self.subD_frame.layout().addWidget(self.subDRemoveButton)
+        self.subDRemoveButton.clicked.connect(self.deleteSubD) ## clicked
               
         #################### Disp Frame ##############################################
                
@@ -309,6 +321,10 @@ class ObjectProperty(QtGui.QDialog):
         self.disp_frame.layout().addWidget(self.dispSetButton)
         self.dispSetButton.clicked.connect(self.checkDisp) ## clicked
 
+        self.dispRemoveButton = QtGui.QPushButton("Remove")
+        self.disp_frame.layout().addWidget(self.dispRemoveButton)
+        self.dispRemoveButton.clicked.connect(self.deleteDisp) ## clicked
+
         ########### Set Name Box ################
         
         lineEditHorizLayout = QtGui.QHBoxLayout() # layout for set creation
@@ -322,7 +338,7 @@ class ObjectProperty(QtGui.QDialog):
         self.createSet_label.setFont(setLabelFont)
         lineEditHorizLayout.addWidget(self.createSet_label)
         self.createSet_label.setMaximumWidth(70)                      
-        self.createSet_lineEdit = QtGui.QLineEdit()
+        self.createSet_lineEdit = LineEdit()
         self.createSet_lineEdit.setMaximumWidth(200)
         lineEditHorizLayout.addWidget(self.createSet_lineEdit)
         self.createSet_lineEdit.setPlaceholderText("Name the set here")
@@ -338,6 +354,39 @@ class ObjectProperty(QtGui.QDialog):
         self.createButton.setMinimumHeight(50)
         self.createButton.setMinimumWidth(400)
         self.createButton.clicked.connect(self.createSet) ## clicked
+        
+        ########### Edit Sets Buttons ################
+        
+        spacer = QtGui.QSpacerItem(175,10)
+        layout.addSpacerItem(spacer)
+        
+        editSetsLabelLayout = QtGui.QHBoxLayout() # layout for label
+        layout.addLayout(editSetsLabelLayout)
+        
+        editSetsLabel = QtGui.QLabel("Edit Sets")
+        editSetsLabelLayout.addWidget(editSetsLabel)
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setPointSize(15)
+        editSetsLabel.setFont(font)
+        editSetsLabel.setMaximumWidth(100)
+        editSetsLabel.setAlignment(QtCore.Qt.AlignCenter)
+        
+        editSetsButtonsLayout = QtGui.QHBoxLayout() # layout for buttons
+        layout.addLayout(editSetsButtonsLayout)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+        
+        self.addToSetButton = QtGui.QPushButton("Add")
+        editSetsButtonsLayout.layout().addWidget(self.addToSetButton)
+        self.addToSetButton.setMinimumHeight(50)
+        self.addToSetButton.setMinimumWidth(150)
+        self.addToSetButton.clicked.connect(self.addSetMembers) ## clicked
+        
+        self.removeToSetButton = QtGui.QPushButton("Remove")
+        editSetsButtonsLayout.layout().addWidget(self.removeToSetButton)
+        self.removeToSetButton.setMinimumHeight(50)
+        self.removeToSetButton.setMinimumWidth(150)
+        self.removeToSetButton.clicked.connect(self.removeSetMembers) ## clicked        
 
         ########### Output Window #################
         
@@ -345,6 +394,7 @@ class ObjectProperty(QtGui.QDialog):
         self.outWindow.setReadOnly(True)
         layout.addWidget(self.outWindow)
         self.outWindow.setMaximumHeight(275)
+        self.outWindow.setText("Docs -- http://redmine.mill.co.uk/projects/millla/wiki/ArnoldObjectProperties")
         
         #######################################################################################        
                 
@@ -352,7 +402,7 @@ class ObjectProperty(QtGui.QDialog):
         
 ###############################################################################################
     
-  ######### Check if checked ##########################
+  ######### Add Attributes ##########################
   
     def checkRenderStats(self):
         getExistingText = self.outWindow.toPlainText()
@@ -374,7 +424,7 @@ class ObjectProperty(QtGui.QDialog):
                     addCastShad = cmds.addAttr(ln='castsShadows',at='bool',dv=1)
                     self.outputText.append('Created Cast Shadows attribute') 
                 else:
-                    self.outputText.append("<font color=yellow>Casts Shadows Already Exists<font/><br>")
+                    self.outputText.append("<font color=yellow>Cast Shadows Already Exists<font/><br>")
             if self.recShadButton.isChecked()==True:
                 if cmds.attributeQuery('recieveShadows',node=theSet,ex=True) == False: 
                     addReceiveShad = cmds.addAttr(ln='recieveShadows',at='bool',dv=1)
@@ -504,6 +554,160 @@ class ObjectProperty(QtGui.QDialog):
         else:
             self.outputText.append("<font color=yellow>Select a Set to Add Attributes<font/>")
         
+        self.getOutputText()    
+            
+  ######### Remove Attributes ##########################
+  
+    def deleteRenderStats(self):
+        getExistingText = self.outWindow.toPlainText()
+        if len(getExistingText) > 0:
+            self.outputText = []       
+
+        getSelect = cmds.ls(sl=True)[0]
+      
+        if cmds.objectType(getSelect, isType='objectSet') == True:
+            theSet = getSelect            
+            if self.primVisButton.isChecked()==True:
+                if cmds.attributeQuery('primaryVisibility',node=theSet,ex=True) == True: 
+                    addPrimaryVis = cmds.deleteAttr('%s.primaryVisibility' % theSet)
+                    self.outputText.append('Removed Primary Visibility attribute')                    
+                else:
+                    self.outputText.append("<font color=yellow>No Primary Visibllity Exists<font/><br>")            
+            if self.castShadButton.isChecked()==True:
+                if cmds.attributeQuery('castsShadows',node=theSet,ex=True) == True: 
+                    addCastShad = cmds.deleteAttr('%s.castsShadows' % theSet)
+                    self.outputText.append('Removed Cast Shadows attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No Cast Shadows Exists<font/><br>")
+            if self.recShadButton.isChecked()==True:
+                if cmds.attributeQuery('recieveShadows',node=theSet,ex=True) == True: 
+                    addReceiveShad = cmds.deleteAttr('%s.recieveShadows' % theSet)
+                    self.outputText.append('Removed Recieve Shadows attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>Recieve Shadows Already Exists<font/><br>")
+            if self.visReflButton.isChecked()==True:
+                if cmds.attributeQuery('visibleInReflections',node=theSet,ex=True) == True: 
+                    addVisInKr = cmds.deleteAttr('%s.visibleInReflections' % theSet)
+                    self.outputText.append('Removed Visible in Reflections attribute')
+                else:
+                    self.outputText.append("<font color=yellow>No Visible in Reflections Exists<font/><br>")
+            if self.visRefrButton.isChecked()==True:
+                if cmds.attributeQuery('visibleInRefractions',node=theSet,ex=True) == True: 
+                    addVisInKt = cmds.deleteAttr('%s.visibleInRefractions'% theSet)
+                    self.outputText.append('Removed Visible in Refraction attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No Visible in Refractions Exists<font/><br>")
+        else:
+            self.outputText.append("<font color=yellow>Select a Set to Remove Attributes<font/>")
+            
+        self.getOutputText()
+
+    def deleteAiRenderStats(self):        
+        getExistingText = self.outWindow.toPlainText()
+        if len(getExistingText) > 0:
+            self.outputText = []   
+        getSelect = cmds.ls(sl=True)[0]
+        if cmds.objectType(getSelect, isType='objectSet') == True:
+            theSet = getSelect           
+            if self.selfShadButton.isChecked()==True:
+                if cmds.attributeQuery('aiSelfShadows',node=theSet,ex=True) == True: 
+                    addAiSelfShad = cmds.deleteAttr('%s.aiSelfShadows' % theSet)
+                    self.outputText.append('Removed aiSelfShadows attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No Self Shadows Exists<font/><br>")            
+            if self.opaqueButton.isChecked()==True:
+                if cmds.attributeQuery('aiOpaque',node=theSet,ex=True) == True: 
+                    addOpaque = cmds.deleteAttr('%s.aiOpaque' % theSet)
+                    self.outputText.append('Removed aiOpaque attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No aiOpaque Exists<font/><br>")
+            if self.visDiffButton.isChecked()==True:
+                if cmds.attributeQuery('aiVisibleInDiffuse',node=theSet,ex=True) == True: 
+                    addVisInKd = cmds.deleteAttr('%s.aiVisibleInDiffuse' % theSet)
+                    self.outputText.append('Removed Visible in Diffuse attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No Visible in Diffuse Exists<font/><br>")
+            if self.visGlossButton.isChecked()==True:
+                if cmds.attributeQuery('aiVisibleInGlossy',node=theSet,ex=True) == True: 
+                    addVisInGlossy = cmds.deleteAttr('%s.aiVisibleInGlossy' % theSet)
+                    self.outputText.append('Removed Visible in Glossy attribute') 
+                else:
+                    print self.outputText.append("<font color=yellow>No Visible in Glossy Exists<font/><br>")
+            if self.matteButton.isChecked()==True:
+                if cmds.attributeQuery('aiMatte',node=theSet,ex=True) == True:
+                    addMatte = cmds.deleteAttr('%s.aiMatte' % theSet)
+                    self.outputText.append('Removed aiMatte attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>Matte Already Exists<font/>")
+            if self.traceSetButton.isChecked()==True:
+                if cmds.attributeQuery('aiTraceSets',node=theSet,ex=True) == True: 
+                    addAiTraceSets = cmds.deleteAttr('%s.aiTraceSets' % theSet)
+                    self.outputText.append('Removed Trace Sets attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No Trace Sets Exists<font/><br>")
+        else:
+            self.outputText.append("<font color=yellow>Select a Set to Remove Attributes<font/>")
+            
+        self.getOutputText()
+
+    def deleteSubD(self):               
+        getExistingText = self.outWindow.toPlainText()
+        if len(getExistingText) > 0:
+            self.outputText = []   
+        getSelect = cmds.ls(sl=True)[0]
+        if cmds.objectType(getSelect, isType='objectSet') == True:
+            theSet = getSelect            
+            if self.subTypeButton.isChecked()==True:
+                if cmds.attributeQuery('aiSubdivType',node=theSet,ex=True) == True: 
+                    addSubdivType = cmds.deleteAttr('%s.aiSubdivType' % theSet)
+                    self.outputText.append('Removed aiSubdiv Type attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No aiSubdiv Type Exists<font/><br>")            
+            if self.subIterButton.isChecked()==True:
+                if cmds.attributeQuery('aiSubdivIterations',node=theSet,ex=True) == True: 
+                    addSubdivIterations = cmds.deleteAttr('%s.aiSubdivIterations' % theSet)
+                    self.outputText.append('Removed aiSubdiv Iterations attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>No aiSubdiv Iterations Exists<font/><br>")  
+        else:
+            self.outputText.append("<font color=yellow>Select a Set to Remove Attributes<font/><br>")
+            
+        self.getOutputText()
+            
+    def deleteDisp(self):        
+        getExistingText = self.outWindow.toPlainText()
+        if len(getExistingText) > 0:
+            self.outputText = []   
+        getSelect = cmds.ls(sl=True)[0]
+        if cmds.objectType(getSelect, isType='objectSet') == True:
+            theSet = getSelect           
+            if self.dispHeightButton.isChecked()==True:
+                if cmds.attributeQuery('aiDispHeight',node=theSet,ex=True) == True: 
+                    addDispHeight = cmds.deleteAttr('%s.aiDispHeight' % theSet)
+                    self.outputText.append('Removed Displacement Height attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>Displacement Height Already Exists<font/><br>")            
+            if self.dispPadButton.isChecked()==True:
+                if cmds.attributeQuery('aiDispPadding',node=theSet,ex=True) == True: 
+                    addBoundsPad = cmds.deleteAttr('%s.aiDispPadding' % theSet)
+                    self.outputText.append('Removed Displacement Padding attribute') 
+                else:
+                    self.outputText.append("<font color=yellow>Displacement Padding Already Exists<font/><br>")
+            if self.dispZeroButton.isChecked()==True:
+                if cmds.attributeQuery('aiDispZeroValue',node=theSet,ex=True) == True: 
+                    addScalarZeroValue = cmds.deleteAttr('%s.aiDispZeroValue' % theSet)
+                    self.outputText.append('Removed Displacement Zero Value attribute')
+                else:
+                    self.outputText.append("<font color=yellow>Disp Zero Already Exists<font/><br>")
+            if self.autoBumpButton.isChecked()==True:
+                if cmds.attributeQuery('aiDispAutobump',node=theSet,ex=True) == True: 
+                    addBoundsPad = cmds.deleteAttr('%s.aiDispAutobump' % theSet)
+                    self.outputText.append('Removed Disp Auto Bump attribute')                     
+                else:
+                    self.outputText.append("<font color=yellow>No AutoBump Exists<font/>")   
+        else:
+            self.outputText.append("<font color=yellow>Select a Set to Remove Attributes<font/>")
+        
         self.getOutputText()
                         
     def getOutputText(self):
@@ -555,7 +759,38 @@ class ObjectProperty(QtGui.QDialog):
             self.outputText.append("<font color=yellow>PLEASE SELECT GEOMETRY FOR THE SET<font/>")
          
         self.getOutputText()
-            
+        
+        
+##################### Edit Existing Sets ######################
+
+    def removeSetMembers(self):
+        getSelect = cmds.ls(sl=True)        
+        objectSet = []
+        geo = []    
+        if cmds.objectType(getSelect[-1]) != 'objectSet':
+            print 'select the geometry first then the set you want to remove from last'
+        else:
+            objectSet = getSelect[-1]
+            del getSelect[-1]
+            geo = getSelect    
+            for x in geo:
+                #print x
+                cmds.sets(x,rm=objectSet)
+                    
+    def addSetMembers(self):
+        getSelect = cmds.ls(sl=True)        
+        objectSet = []
+        geo = []    
+        if cmds.objectType(getSelect[-1]) != 'objectSet':
+            print 'select the geometry first then the set you want to add too'
+        else:
+            objectSet = getSelect[-1]
+            del getSelect[-1]
+            geo = getSelect    
+            for x in geo:
+                #print x
+                cmds.sets(x,add=objectSet)
+               
 ######################### Row Toggles #########################
 
     def rStatsToggle(self, event):
