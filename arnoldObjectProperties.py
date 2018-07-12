@@ -67,7 +67,7 @@ class ObjectProperty(QtGui.QDialog):
         layout.addLayout(WhichGeoLayout)
         layout.setAlignment(QtCore.Qt.AlignTop)
         
-        self.whichOne = QtGui.QSpacerItem(100,0)
+        self.whichOne = QtGui.QSpacerItem(225,0)
         WhichGeoLayout.layout().addSpacerItem(self.whichOne)
         
         self.geoButton = QtGui.QCheckBox('Geometry')
@@ -77,21 +77,14 @@ class ObjectProperty(QtGui.QDialog):
         self.geoButton.setFont(font)
         self.geoButton.setChecked(True)
         
-        self.procPullButton = QtGui.QCheckBox('Procedural Pulldown')
-        WhichGeoLayout.addWidget(self.procPullButton)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.procPullButton.setFont(font)
-        self.procPullButton.setChecked(False)
-        
-        self.procCheckboxButton = QtGui.QCheckBox('Procedural Checkbox')
+        self.procCheckboxButton = QtGui.QCheckBox('Procedural')
         WhichGeoLayout.addWidget(self.procCheckboxButton)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.procCheckboxButton.setFont(font)
         self.procCheckboxButton.setChecked(False)
         
-        self.whichTwo = QtGui.QSpacerItem(100,0)
+        self.whichTwo = QtGui.QSpacerItem(150,0)
         WhichGeoLayout.layout().addSpacerItem(self.whichTwo)
         
         ################## Layout for frames ########################################
@@ -512,40 +505,7 @@ class ObjectProperty(QtGui.QDialog):
                         addVisInKt = cmds.addAttr(ln='visibleInRefractions',at='bool',dv=1)
                         self.outputText.append('Created Visible in Refraction attribute') 
                     else:
-                        self.outputText.append("<font color=yellow>Visible in Refractions Already Exists<font/><br>")
-           
-           ############ Procedural Pulldown #######################
-            if self.procPullButton.isChecked()==True:                                
-                if self.primVisButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__primary',node=theSet,ex=True) == False: 
-                        addPrimaryVis = cmds.addAttr(ln='attrai__all__vis__primary',at='bool',dv=1)
-                        self.outputText.append('Created Primary Visibility attribute for procedural pulldown')                    
-                    else:
-                        self.outputText.append("<font color=yellow>Primary Visibllity Already Exists<font/><br>")            
-                if self.castShadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__shadow',node=theSet,ex=True) == False: 
-                        addCastShad = cmds.addAttr(ln='attrai__all__vis__shadow',at='bool',dv=1)
-                        self.outputText.append('Created Cast Shadows attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>Cast Shadows Already Exists<font/><br>")
-                if self.recShadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__shape__receive_shadows',node=theSet,ex=True) == False: 
-                        addReceiveShad = cmds.addAttr(ln='attrai__all__shape__receive_shadows',at='bool',dv=1)
-                        self.outputText.append('Created Recieve Shadows attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>Recieve Shadows Already Exists<font/><br>")
-                if self.visReflButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__reflection',node=theSet,ex=True) == False: 
-                        addVisInKr = cmds.addAttr(ln='attrai__all__vis__reflection',at='bool',dv=1)
-                        self.outputText.append('Created Visible in Reflections attribute for procedural pulldown')
-                    else:
-                        self.outputText.append("<font color=yellow>Visible in Reflections Already Exists<font/><br>")
-                if self.visRefrButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__refraction',node=theSet,ex=True) == False: 
-                        addVisInKt = cmds.addAttr(ln='attrai__all__vis__refraction',at='bool',dv=1)
-                        self.outputText.append('Created Visible in Refraction attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>Visible in Refractions Already Exists<font/><br>")                    
+                        self.outputText.append("<font color=yellow>Visible in Refractions Already Exists<font/><br>")               
 
            ############ Procedural Checkbox #######################           
             if self.procCheckboxButton.isChecked()==True:                                
@@ -630,45 +590,6 @@ class ObjectProperty(QtGui.QDialog):
                         self.outputText.append('Created Trace Sets attribute') 
                     else:
                         self.outputText.append("<font color=yellow>Trace Sets Already Exists<font/><br>")
-                    
-            ############ Procedural Pulldown ###########################
-            if self.procPullButton.isChecked()==True:             
-                if self.selfShadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__shape__self_shadows',node=theSet,ex=True) == False: 
-                        addAiSelfShad = cmds.addAttr(ln='attrai__all__shape__self_shadows',at='bool',dv=1)
-                        self.outputText.append('Created aiSelfShadows attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>Self Shadows Already Exists for procedural pulldown<font/><br>")            
-                if self.opaqueButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__shape__opaque',node=theSet,ex=True) == False: 
-                        addOpaque = cmds.addAttr(ln='attrai__all__shape__opaque',at='bool',dv=1)
-                        self.outputText.append('Created aiOpaque attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>aiOpaque Already Exists for procedural pulldown<font/><br>")
-                if self.visDiffButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__diffuse',node=theSet,ex=True) == False: 
-                        addVisInKd = cmds.addAttr(ln='attrai__all__vis__diffuse',at='bool',dv=1)
-                        self.outputText.append('Created Visible in Diffuse attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>Visible in Diffuse Already Exists for procedural pulldown<font/><br>")
-                if self.visGlossButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__glossy',node=theSet,ex=True) == False: 
-                        addVisInGlossy = cmds.addAttr(ln='attrai__all__vis__glossy',at='bool',dv=1)
-                        self.outputText.append('Created Visible in Glossy attribute') 
-                    else:
-                        print self.outputText.append("<font color=yellow>Visible in Glossy Already Exists for procedural pulldown<font/><br>")
-                if self.matteButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__shape__matte',node=theSet,ex=True) == False: 
-                        addMatte = cmds.addAttr(ln='attrai__shape__matte',at='bool',dv=0)
-                        self.outputText.append('Created aiMatte attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>Matte Already Exists for procedural pulldown<font/><br>")
-                if self.traceSetButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__shape__trace_sets',node=theSet,ex=True) == False: 
-                        addAiTraceSets = cmds.addAttr(ln='attrai__shape__trace_sets',dt='string')
-                        self.outputText.append('Created Trace Sets attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>Trace Sets Already Exists for procedural pulldown<font/><br>")
             
             ############ Procedural Checkbox ###########################            
             if self.procCheckboxButton.isChecked()==True:             
@@ -735,21 +656,6 @@ class ObjectProperty(QtGui.QDialog):
                         self.outputText.append('Created aiSubdiv Iterations attribute') 
                     else:
                         self.outputText.append("<font color=yellow>aiSubdiv Iterations Already Exists<font/><br>")
-                    
-            ########## Proc Pulldown ############################
-            if self.procPullButton.isChecked()==True:
-                if self.subTypeButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__polymesh__subdiv_type',node=theSet,ex=True) == False: 
-                        addSubdivType = cmds.addAttr(ln='attrai__polymesh__subdiv_type',at='enum', enumName='none:catclark:linear')
-                        self.outputText.append('Created aiSubdiv Type attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>aiSubdiv Type Already Exists<font/><br>")            
-                if self.subIterButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__polymesh__subdiv_iterations',node=theSet,ex=True) == False: 
-                        addSubdivIterations = cmds.addAttr(ln='attrai__polymesh__subdiv_iterations',at='byte')
-                        self.outputText.append('Created aiSubdiv Iterations attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>aiSubdiv Iterations Already Exists<font/><br>")  
             
             ########## Proc Checkbox ############################
             if self.procCheckboxButton.isChecked()==True:
@@ -801,33 +707,6 @@ class ObjectProperty(QtGui.QDialog):
                 if self.autoBumpButton.isChecked()==True:
                     if cmds.attributeQuery('aiDispAutobump',node=theSet,ex=True) == False: 
                         addBoundsPad = cmds.addAttr(ln='aiDispAutobump',at='bool',dv=0)
-                        self.outputText.append('Created Disp Auto Bump attribute')                     
-                    else:
-                        self.outputText.append("<font color=yellow>AutoBump Already Exists<font/>")
-                    
-            ############ Proc Pulldown #################################
-            if self.procPullButton.isChecked()==True:
-                #if self.dispHeightButton.isChecked()==True:
-                    #if cmds.attributeQuery('aiDispHeight',node=theSet,ex=True) == False: 
-                        #addDispHeight = cmds.addAttr(ln='aiDispHeight',at='float')
-                        #self.outputText.append('Created Displacement Height attribute') 
-                    #else:
-                        #self.outputText.append("<font color=yellow>Displacement Height Already Exists<font/><br>")            
-                if self.dispPadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__min_disp_padding',node=theSet,ex=True) == False: 
-                        addBoundsPad = cmds.addAttr(ln='attrai__min_disp_padding',at='float')
-                        self.outputText.append('Created Displacement Padding attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>Displacement Padding Already Exists<font/><br>")
-                if self.dispZeroButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__use_default_disp_zero_value',node=theSet,ex=True) == False:
-                        addScalarZeroValue = cmds.addAttr(ln='attrai__use_default_disp_zero_value',at='float')
-                        self.outputText.append('Created Displacement Zero Value attribute')
-                    else:
-                        self.outputText.append("<font color=yellow>Disp Zero Already Exists<font/><br>")
-                if self.autoBumpButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__override_autobump',node=theSet,ex=True) == False: 
-                        addBoundsPad = cmds.addAttr(ln='attrai__override_autobump',at='bool',dv=0)
                         self.outputText.append('Created Disp Auto Bump attribute')                     
                     else:
                         self.outputText.append("<font color=yellow>AutoBump Already Exists<font/>")
@@ -906,39 +785,6 @@ class ObjectProperty(QtGui.QDialog):
                     if cmds.attributeQuery('visibleInRefractions',node=theSet,ex=True) == True: 
                         addVisInKt = cmds.deleteAttr('%s.visibleInRefractions'% theSet)
                         self.outputText.append('Removed Visible in Refraction attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Visible in Refractions Exists<font/><br>")
-                        
-            ############## Procedural Pulldown ########################################
-            if self.procPullButton.isChecked()==True:           
-                if self.primVisButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__primary',node=theSet,ex=True) == True: 
-                        addPrimaryVis = cmds.deleteAttr('%s.attrai__all__vis__primary' % theSet)
-                        self.outputText.append('Removed Primary Visibility attribute for procedural pulldown')                    
-                    else:
-                        self.outputText.append("<font color=yellow>No Primary Visibllity Exists<font/><br>")            
-                if self.castShadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__shadow',node=theSet,ex=True) == True: 
-                        addCastShad = cmds.deleteAttr('%s.attrai__all__vis__shadow' % theSet)
-                        self.outputText.append('Removed Cast Shadows attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Cast Shadows Exists<font/><br>")
-                if self.recShadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__shape__receive_shadows',node=theSet,ex=True) == True: 
-                        addReceiveShad = cmds.deleteAttr('%s.attrai__all__shape__receive_shadows' % theSet)
-                        self.outputText.append('Removed Recieve Shadows attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Recieve Shadows Exists<font/><br>")
-                if self.visReflButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__reflection',node=theSet,ex=True) == True: 
-                        addVisInKr = cmds.deleteAttr('%s.attrai__all__vis__reflection' % theSet)
-                        self.outputText.append('Removed Visible in Reflections attribute for procedural pulldown')
-                    else:
-                        self.outputText.append("<font color=yellow>No Visible in Reflections Exists<font/><br>")
-                if self.visRefrButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__refraction',node=theSet,ex=True) == True: 
-                        addVisInKt = cmds.deleteAttr('%s.attrai__all__vis__refraction'% theSet)
-                        self.outputText.append('Removed Visible in Refraction attribute for procedural pulldown') 
                     else:
                         self.outputText.append("<font color=yellow>No Visible in Refractions Exists<font/><br>")
                         
@@ -1027,45 +873,6 @@ class ObjectProperty(QtGui.QDialog):
                     else:
                         self.outputText.append("<font color=yellow>No Trace Sets Exists<font/><br>")
                         
-            ############## Procedural Pulldown #####################################    
-            if self.procPullButton.isChecked()==True:           
-                if self.selfShadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__shape__self_shadows',node=theSet,ex=True) == True: 
-                        addAiSelfShad = cmds.deleteAttr('%s.attrai__all__shape__self_shadows' % theSet)
-                        self.outputText.append('Removed aiSelfShadows attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Self Shadows Exists<font/><br>")            
-                if self.opaqueButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__shape__opaque',node=theSet,ex=True) == True: 
-                        addOpaque = cmds.deleteAttr('%s.attrai__all__shape__opaque' % theSet)
-                        self.outputText.append('Removed aiOpaque attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No aiOpaque Exists<font/><br>")
-                if self.visDiffButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__diffuse',node=theSet,ex=True) == True: 
-                        addVisInKd = cmds.deleteAttr('%s.attrai__all__vis__diffuse' % theSet)
-                        self.outputText.append('Removed Visible in Diffuse attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Visible in Diffuse Exists<font/><br>")
-                if self.visGlossButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__all__vis__glossy',node=theSet,ex=True) == True: 
-                        addVisInGlossy = cmds.deleteAttr('%s.attrai__all__vis__glossy' % theSet)
-                        self.outputText.append('Removed Visible in Glossy attribute for procedural pulldown') 
-                    else:
-                        print self.outputText.append("<font color=yellow>No Visible in Glossy Exists<font/><br>")
-                if self.matteButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__shape__matte',node=theSet,ex=True) == True:
-                        addMatte = cmds.deleteAttr('%s.attrai__shape__matte' % theSet)
-                        self.outputText.append('Removed aiMatte attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Matte Exists<font/><br>")
-                if self.traceSetButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__shape__trace_sets',node=theSet,ex=True) == True: 
-                        addAiTraceSets = cmds.deleteAttr('%s.attrai__shape__trace_sets' % theSet)
-                        self.outputText.append('Removed Trace Sets attribute for procedural pulldown') 
-                    else:
-                        self.outputText.append("<font color=yellow>No Trace Sets Exists<font/><br>") 
-                        
             ############## Procedural Checkbox #####################################    
             if self.procCheckboxButton.isChecked()==True:           
                 if self.selfShadButton.isChecked()==True:
@@ -1132,21 +939,6 @@ class ObjectProperty(QtGui.QDialog):
                     else:
                         self.outputText.append("<font color=yellow>No aiSubdiv Iterations Exists<font/><br>")
                     
-            ################ Procedural Pulldown ################################
-            if self.procPullButton.isChecked()==True:
-                if self.subTypeButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__polymesh__subdiv_type',node=theSet,ex=True) == True: 
-                        addSubdivType = cmds.deleteAttr('%s.attrai__polymesh__subdiv_type' % theSet)
-                        self.outputText.append('Removed aiSubdiv Type attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>No aiSubdiv Type Exists<font/><br>")            
-                if self.subIterButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__polymesh__subdiv_iterations',node=theSet,ex=True) == True: 
-                        addSubdivIterations = cmds.deleteAttr('%s.attrai__polymesh__subdiv_iterations' % theSet)
-                        self.outputText.append('Removed aiSubdiv Iterations attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>No aiSubdiv Iterations Exists<font/><br>")
-                    
            ################ Procedural Checkbox ################################
             if self.procCheckboxButton.isChecked()==True:
                 if self.subTypeButton.isChecked()==True:
@@ -1199,34 +991,7 @@ class ObjectProperty(QtGui.QDialog):
                         addBoundsPad = cmds.deleteAttr('%s.aiDispAutobump' % theSet)
                         self.outputText.append('Removed Disp Auto Bump attribute')                     
                     else:
-                        self.outputText.append("<font color=yellow>No AutoBump Exists<font/>")
-                    
-            ############### Procedural Pulldown ##############################
-            if self.procPullButton.isChecked()==True:            
-                #if self.dispHeightButton.isChecked()==True:
-                    #if cmds.attributeQuery('aiDispHeight',node=theSet,ex=True) == True: 
-                        #addDispHeight = cmds.deleteAttr('%s.aiDispHeight' % theSet)
-                        #self.outputText.append('Removed Displacement Height attribute') 
-                    #else:
-                        #self.outputText.append("<font color=yellow>Displacement Height Already Exists<font/><br>")            
-                if self.dispPadButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__min_disp_padding',node=theSet,ex=True) == True: 
-                        addBoundsPad = cmds.deleteAttr('%s.attrai__min_disp_padding' % theSet)
-                        self.outputText.append('Removed Displacement Padding attribute') 
-                    else:
-                        self.outputText.append("<font color=yellow>Displacement Padding Already Exists<font/><br>")
-                if self.dispZeroButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__use_default_disp_zero_value',node=theSet,ex=True) == True: 
-                        addScalarZeroValue = cmds.deleteAttr('%s.attrai__use_default_disp_zero_value' % theSet)
-                        self.outputText.append('Removed Displacement Zero Value attribute')
-                    else:
-                        self.outputText.append("<font color=yellow>Disp Zero Already Exists<font/><br>")
-                if self.autoBumpButton.isChecked()==True:
-                    if cmds.attributeQuery('attrai__override_autobump',node=theSet,ex=True) == True: 
-                        addBoundsPad = cmds.deleteAttr('%s.attrai__override_autobump' % theSet)
-                        self.outputText.append('Removed Disp Auto Bump attribute')                     
-                    else:
-                        self.outputText.append("<font color=yellow>No AutoBump Exists<font/>")            
+                        self.outputText.append("<font color=yellow>No AutoBump Exists<font/>") 
             
             ############### Procedural Checkbox ##############################
             if self.procCheckboxButton.isChecked()==True:            
