@@ -44,4 +44,6 @@ print value
 
 #### Function to set frame ####
 for x in range(getFirstFrame,getLastFrame+1):
-    print x
+    setFrame = nuke.frame(x)
+    cropValue = nuke.toNode(curveTool).knob('autocropdata').getValue()
+    print cropValue
