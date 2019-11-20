@@ -1,3 +1,6 @@
+
+
+
 import nuke
 import time
 import csv
@@ -19,6 +22,9 @@ for x in selectList:
     getLastFrame = []
     getFirstFrame = x['first'].value()
     getLastFrame = x['last'].value()
+    #getFirstFrame = 500
+    #getLastFrame = 1000
+
     #print getFirstFrame
     #print getLastFrame
 
@@ -52,6 +58,7 @@ for x in selectList:
     curveTool = []
     curveTool = nuke.nodes.CurveTool()
     curveTool['operation'].setValue('Auto Crop')
+    curveTool['ccrange'].setValue(0.005)
     curveTool['ROI'].setValue([0,0,getWidth,getHeight])
     curveTool['afterFrameRender'].setValue("frameData[nuke.frame()]=nuke.toNode(getCurveToolLabel).knob('autocropdata').getValue()")
     getCurveToolLabel = curveTool['name'].value()
@@ -71,7 +78,7 @@ for x in selectList:
 
     #### Writes CSV file ####
     frameData_csv_file = []
-    with open('autoCropData.csv','wb') as frameData_csv_file:
+    with open('frameData_MaskTest.csv','wb') as frameData_csv_file:
         writer = csv.writer(frameData_csv_file)
         for key, value in frameData.items():
            writer.writerow([key, value])
