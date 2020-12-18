@@ -1,0 +1,112 @@
+
+
+
+
+//just source the script aRPsyopProductionExport
+
+//then run aRPsyopProductionExport in the command line as mel
+
+
+
+
+
+
+
+//Anim Export//
+
+global proc aRPsyopProductionExport()
+{
+
+//Import modules from reference state//
+string $allRefs[] = `file -q -r`;
+
+for ($ref in $allRefs) {
+
+file -ir $ref;
+
+}
+
+//Remove name Spaces//
+select -r ("*:*"+"*node*") ;
+lockNode -l 0 ;
+
+
+//aRRemoveNameSpaces;
+
+string $allNodes[] = `ls` ;  
+	   
+	// Loop Through Them  
+	for($node in $allNodes) {  
+	   
+	   // Tokenize And Rename  
+	   string $buffer[] ;  
+	   tokenize $node ":" $buffer ;  
+	   string $newName = $buffer[size($buffer)-1] ;  
+	   catch(`rename $node $newName`) ;  
+	   
+	} 
+
+
+
+//bake//
+
+playbackOptions -minTime 1 ;
+
+
+float $minTime = `playbackOptions -q -minTime`;
+
+float $maxTime = `playbackOptions -q -maxTime`;
+
+
+select -r -ne bakeSet_unity ;
+pickWalk -d down;
+
+bakeResults -simulation true -t ("0:" + $maxTime) -hierarchy below -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true {"g_mod_unity", "blend_targets_all"};
+
+cutKey -clear -time "-60:-0" -option keys -hierarchy below -controlPoints 0 -shape 1 {"g_mod_unity"};
+
+select -r -ne rigSet_modUnityExport ;
+pickWalk -d down;
+
+doDelete ;
+
+
+//clean mixer//
+cutKey -clear -time ":" -hierarchy none -controlPoints 0 -shape 1 {"g_mixer_hips"};
+
+select -r "*Constraint*" ;
+doDelete ;
+
+doGroup 0 1 0;
+
+
+{
+		// create a confirm dialog//
+		$response = `confirmDialog 
+		
+						  -title "Export Mocap" 
+			              -message "Scene Prepared.  You must now export an fbx file on selected nodes."
+			              -button "OK" 
+			              
+			              -defaultButton "OK"
+			             
+			              -dismissString "OK"`;
+		
+	
+	}
+	
+	
+//fix bug//
+setAttr "g_mixer_hips.visibility" 1;
+setAttr "g_mixer_hips.scaleX" 1;
+setAttr "g_mixer_hips.scaleY" 1;
+setAttr "g_mixer_hips.scaleZ" 1;	
+
+
+
+
+select -r g_root ;
+select -add  null1 ;
+ExportSelectionOptions;
+
+}
